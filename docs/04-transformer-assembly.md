@@ -1,13 +1,13 @@
-# 从零实现 Transformer（四）：模型组装
+# 动手学AI ⚡️ 手写Transformer 04：模型组装
 
 > 上一篇我们造好了多头注意力、前馈网络、残差连接等核心零件，准备合体！（我来组成头部，我来组成……）
 
 ## 系列目录
 
-1. [PyTorch 基础与神经网络模块](01-pytorch-basics.md)
+1. [环境与前期准备](01-pytorch-basics.md)
 2. [数据处理与 Transformer 输入层](02-data-and-input-layer.md)
 3. [多头注意力机制与核心组件](03-multi-head-attention.md)
-4. **Transformer 模型组装**（本篇）
+4. **模型组装**（本篇）
 5. [训练、推理与可视化](05-training-and-inference.md)
 
 ---

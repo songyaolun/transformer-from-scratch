@@ -1,13 +1,13 @@
-# 从零实现 Transformer（三）：多头注意力机制与核心组件
+# 动手学AI ⚡️ 手写Transformer 03：多头注意力机制与核心组件
 
 > 上一篇我们把人类的句子变成了 `(Batch, Seq_len, Dim)` 的张量，现在我们要创建 Transformer 的大脑——多头注意力机制，让它能学习知识，本章介绍如何搭建 Encoder 和 Decoder 的核心组件。
 
 ## 系列目录
 
-1. [PyTorch 基础与神经网络模块](01-pytorch-basics.md)
+1. [环境与前期准备](01-pytorch-basics.md)
 2. [数据处理与 Transformer 输入层](02-data-and-input-layer.md)
 3. **多头注意力机制与核心组件**（本篇）
-4. [Transformer 模型组装](04-transformer-assembly.md)
+4. [模型组装](04-transformer-assembly.md)
 5. [训练、推理与可视化](05-training-and-inference.md)
 
 ---

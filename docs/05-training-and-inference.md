@@ -1,13 +1,13 @@
-# 从零实现 Transformer（五）：训练、推理与可视化
+# 动手学AI ⚡️ 手写Transformer 05：训练、推理与可视化
 
 > 来到最终章啦，我们已经搭好了模型的骨架，现在要怎么赋予它智慧？本篇将介绍训练、推理和注意力可视化的完整流程——用人类的知识浇灌这颗种子，让它长成参天大树。
 
 ## 系列目录
 
-1. [PyTorch 基础与神经网络模块](01-pytorch-basics.md)
+1. [环境与前期准备](01-pytorch-basics.md)
 2. [数据处理与 Transformer 输入层](02-data-and-input-layer.md)
 3. [多头注意力机制与核心组件](03-multi-head-attention.md)
-4. [Transformer 模型组装](04-transformer-assembly.md)
+4. [模型组装](04-transformer-assembly.md)
 5. **训练、推理与可视化**（本篇）
 
 ---
@@ -490,10 +490,10 @@ plot_attention(src_text, "<sos>我爱深度学习", attn_avg[1:])
 
 ## 全系列回顾
 
-1. [PyTorch 基础与神经网络模块](01-pytorch-basics.md) — 张量操作、nn.Module、常用层
+1. [环境与前期准备](01-pytorch-basics.md) — 张量操作、nn.Module、常用层
 2. [数据处理与 Transformer 输入层](02-data-and-input-layer.md) — 词表、Padding、Embedding、位置编码
 3. [多头注意力机制与核心组件](03-multi-head-attention.md) — 注意力、FFN、残差连接、Encoder/Decoder Layer
-4. [Transformer 模型组装](04-transformer-assembly.md) — Mask、Encoder、Decoder、完整 Transformer
+4. [模型组装](04-transformer-assembly.md) — Mask、Encoder、Decoder、完整 Transformer
 5. [训练、推理与可视化](05-training-and-inference.md) — 损失函数、训练循环、推理、注意力可视化
 
 ## 参考文章

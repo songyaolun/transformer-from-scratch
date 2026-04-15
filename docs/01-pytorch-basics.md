@@ -1,12 +1,12 @@
-# 从零实现 Transformer（一）：PyTorch 基础与神经网络模块
+# 动手学AI ⚡️ 手写Transformer 01：环境与前期准备
 
 
 ## 系列目录
 
-1. **PyTorch 基础与神经网络模块**（本篇）
+1. **环境与前期准备**（本篇）
 2. [数据处理与 Transformer 输入层](02-data-and-input-layer.md)
 3. [多头注意力机制与核心组件](03-multi-head-attention.md)
-4. [Transformer 模型组装](04-transformer-assembly.md)
+4. [模型组装](04-transformer-assembly.md)
 5. [训练、推理与可视化](05-training-and-inference.md)
 
 ---

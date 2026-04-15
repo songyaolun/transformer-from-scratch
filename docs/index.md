@@ -38,11 +38,11 @@ $$文章信息质量 = \frac{创作者的（知识水平 \times 时间成本 \ti
 
 | 序号 | 文章 | 内容 |
 |------|------|------|
-| 1 | [PyTorch 基础与神经网络模块](01-pytorch-basics.md) | 张量操作、nn.Module、常用层、训练流程 |
-| 2 | [数据处理与 Transformer 输入层](02-data-and-input-layer.md) | 词表构建、Padding、Embedding、位置编码 |
-| 3 | [多头注意力机制与核心组件](03-multi-head-attention.md) | 注意力公式、FFN、残差连接、Encoder/Decoder Layer |
-| 4 | [Transformer 模型组装](04-transformer-assembly.md) | Mask、Encoder、Decoder、完整 Transformer |
-| 5 | [训练、推理与可视化](05-training-and-inference.md) | 损失函数、训练循环、Greedy Decode、注意力可视化 |
+| 01 | [环境与前期准备](01-pytorch-basics.md) | 张量操作、nn.Module、常用层、训练流程 |
+| 02 | [数据处理与 Transformer 输入层](02-data-and-input-layer.md) | 词表构建、Padding、Embedding、位置编码 |
+| 03 | [多头注意力机制与核心组件](03-multi-head-attention.md) | 注意力公式、FFN、残差连接、Encoder/Decoder Layer |
+| 04 | [模型组装](04-transformer-assembly.md) | Mask、Encoder、Decoder、完整 Transformer |
+| 05 | [训练、推理与可视化](05-training-and-inference.md) | 损失函数、训练循环、Greedy Decode、注意力可视化 |
 
 ## 一键运行
 

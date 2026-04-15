@@ -1,13 +1,13 @@
-# 从零实现 Transformer（二）：数据处理与 Transformer 输入层
+# 动手学AI ⚡️ 手写Transformer 02：数据处理与 Transformer 输入层
 
 > 上一篇我们掌握了 PyTorch 的基础操作，本篇带你逐行手写从原始文本到模型输入的完整流水线——一句 `I love deep learning` 在进入 Transformer 之前，会被切碎、编号、填充、升维、注入位置。写完这些代码，你就亲手打通了 Transformer 的"感官系统"。
 
 ## 系列目录
 
-1. [PyTorch 基础与神经网络模块](01-pytorch-basics.md)
+1. [环境与前期准备](01-pytorch-basics.md)
 2. **数据处理与 Transformer 输入层**（本篇）
 3. [多头注意力机制与核心组件](03-multi-head-attention.md)
-4. [Transformer 模型组装](04-transformer-assembly.md)
+4. [模型组装](04-transformer-assembly.md)
 5. [训练、推理与可视化](05-training-and-inference.md)
 
 ---
