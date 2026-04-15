@@ -1,0 +1,1377 @@
+
+<!doctype html>
+<html lang="zh" class="no-js">
+  <head>
+    
+      <meta charset="utf-8">
+      <meta name="viewport" content="width=device-width,initial-scale=1">
+      
+        <meta name="description" content="从零开始用 PyTorch 手写一个完整的 Transformer 模型">
+      
+      
+        <meta name="author" content="songyaolun">
+      
+      
+        <link rel="canonical" href="https://songyaolun.github.io/transformer-from-scratch/02-data-and-input-layer/">
+      
+      
+        <link rel="prev" href="../01-pytorch-basics/">
+      
+      
+        <link rel="next" href="../03-multi-head-attention/">
+      
+      
+        
+      
+      
+      <link rel="icon" href="../assets/images/favicon.png">
+      <meta name="generator" content="mkdocs-1.6.1, mkdocs-material-9.7.6">
+    
+    
+      
+        <title>02：数据处理与 Transformer 输入层 - 从零实现 Transformer</title>
+      
+    
+    
+      <link rel="stylesheet" href="../assets/stylesheets/main.484c7ddc.min.css">
+      
+        
+        <link rel="stylesheet" href="../assets/stylesheets/palette.ab4e12ef.min.css">
+      
+      
+
+
+    
+    
+      
+    
+    
+      
+        
+        
+        <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+        <link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Roboto:300,300i,400,400i,700,700i%7CRoboto+Mono:400,400i,700,700i&display=fallback">
+        <style>:root{--md-text-font:"Roboto";--md-code-font:"Roboto Mono"}</style>
+      
+    
+    
+    <script>__md_scope=new URL("..",location),__md_hash=e=>[...e].reduce(((e,_)=>(e<<5)-e+_.charCodeAt(0)),0),__md_get=(e,_=localStorage,t=__md_scope)=>JSON.parse(_.getItem(t.pathname+"."+e)),__md_set=(e,_,t=localStorage,a=__md_scope)=>{try{t.setItem(a.pathname+"."+e,JSON.stringify(_))}catch(e){}}</script>
+    
+      
+
+    
+    
+  </head>
+  
+  
+    
+    
+      
+    
+    
+    
+    
+    <body dir="ltr" data-md-color-scheme="default" data-md-color-primary="indigo" data-md-color-accent="indigo">
+  
+    
+    <input class="md-toggle" data-md-toggle="drawer" type="checkbox" id="__drawer" autocomplete="off">
+    <input class="md-toggle" data-md-toggle="search" type="checkbox" id="__search" autocomplete="off">
+    <label class="md-overlay" for="__drawer"></label>
+    <div data-md-component="skip">
+      
+        
+        <a href="#ai-transformer-02-transformer" class="md-skip">
+          跳转至
+        </a>
+      
+    </div>
+    <div data-md-component="announce">
+      
+    </div>
+    
+    
+      
+
+  
+
+<header class="md-header md-header--shadow" data-md-component="header">
+  <nav class="md-header__inner md-grid" aria-label="页眉">
+    <a href=".." title="从零实现 Transformer" class="md-header__button md-logo" aria-label="从零实现 Transformer" data-md-component="logo">
+      
+  
+  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 8a3 3 0 0 0 3-3 3 3 0 0 0-3-3 3 3 0 0 0-3 3 3 3 0 0 0 3 3m0 3.54C9.64 9.35 6.5 8 3 8v11c3.5 0 6.64 1.35 9 3.54 2.36-2.19 5.5-3.54 9-3.54V8c-3.5 0-6.64 1.35-9 3.54"/></svg>
+
+    </a>
+    <label class="md-header__button md-icon" for="__drawer">
+      
+      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M3 6h18v2H3zm0 5h18v2H3zm0 5h18v2H3z"/></svg>
+    </label>
+    <div class="md-header__title" data-md-component="header-title">
+      <div class="md-header__ellipsis">
+        <div class="md-header__topic">
+          <span class="md-ellipsis">
+            从零实现 Transformer
+          </span>
+        </div>
+        <div class="md-header__topic" data-md-component="header-topic">
+          <span class="md-ellipsis">
+            
+              02：数据处理与 Transformer 输入层
+            
+          </span>
+        </div>
+      </div>
+    </div>
+    
+      
+        <form class="md-header__option" data-md-component="palette">
+  
+    
+    
+    
+    <input class="md-option" data-md-color-media="(prefers-color-scheme: light)" data-md-color-scheme="default" data-md-color-primary="indigo" data-md-color-accent="indigo"  aria-label="切换到暗色模式"  type="radio" name="__palette" id="__palette_0">
+    
+      <label class="md-header__button md-icon" title="切换到暗色模式" for="__palette_1" hidden>
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 8a4 4 0 0 0-4 4 4 4 0 0 0 4 4 4 4 0 0 0 4-4 4 4 0 0 0-4-4m0 10a6 6 0 0 1-6-6 6 6 0 0 1 6-6 6 6 0 0 1 6 6 6 6 0 0 1-6 6m8-9.31V4h-4.69L12 .69 8.69 4H4v4.69L.69 12 4 15.31V20h4.69L12 23.31 15.31 20H20v-4.69L23.31 12z"/></svg>
+      </label>
+    
+  
+    
+    
+    
+    <input class="md-option" data-md-color-media="(prefers-color-scheme: dark)" data-md-color-scheme="slate" data-md-color-primary="indigo" data-md-color-accent="indigo"  aria-label="切换到亮色模式"  type="radio" name="__palette" id="__palette_1">
+    
+      <label class="md-header__button md-icon" title="切换到亮色模式" for="__palette_0" hidden>
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 18c-.89 0-1.74-.2-2.5-.55C11.56 16.5 13 14.42 13 12s-1.44-4.5-3.5-5.45C10.26 6.2 11.11 6 12 6a6 6 0 0 1 6 6 6 6 0 0 1-6 6m8-9.31V4h-4.69L12 .69 8.69 4H4v4.69L.69 12 4 15.31V20h4.69L12 23.31 15.31 20H20v-4.69L23.31 12z"/></svg>
+      </label>
+    
+  
+</form>
+      
+    
+    
+      <script>var palette=__md_get("__palette");if(palette&&palette.color){if("(prefers-color-scheme)"===palette.color.media){var media=matchMedia("(prefers-color-scheme: light)"),input=document.querySelector(media.matches?"[data-md-color-media='(prefers-color-scheme: light)']":"[data-md-color-media='(prefers-color-scheme: dark)']");palette.color.media=input.getAttribute("data-md-color-media"),palette.color.scheme=input.getAttribute("data-md-color-scheme"),palette.color.primary=input.getAttribute("data-md-color-primary"),palette.color.accent=input.getAttribute("data-md-color-accent")}for(var[key,value]of Object.entries(palette.color))document.body.setAttribute("data-md-color-"+key,value)}</script>
+    
+    
+    
+      
+      
+        <label class="md-header__button md-icon" for="__search">
+          
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M9.5 3A6.5 6.5 0 0 1 16 9.5c0 1.61-.59 3.09-1.56 4.23l.27.27h.79l5 5-1.5 1.5-5-5v-.79l-.27-.27A6.52 6.52 0 0 1 9.5 16 6.5 6.5 0 0 1 3 9.5 6.5 6.5 0 0 1 9.5 3m0 2C7 5 5 7 5 9.5S7 14 9.5 14 14 12 14 9.5 12 5 9.5 5"/></svg>
+        </label>
+        <div class="md-search" data-md-component="search" role="dialog">
+  <label class="md-search__overlay" for="__search"></label>
+  <div class="md-search__inner" role="search">
+    <form class="md-search__form" name="search">
+      <input type="text" class="md-search__input" name="query" aria-label="搜索" placeholder="搜索" autocapitalize="off" autocorrect="off" autocomplete="off" spellcheck="false" data-md-component="search-query" required>
+      <label class="md-search__icon md-icon" for="__search">
+        
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M9.5 3A6.5 6.5 0 0 1 16 9.5c0 1.61-.59 3.09-1.56 4.23l.27.27h.79l5 5-1.5 1.5-5-5v-.79l-.27-.27A6.52 6.52 0 0 1 9.5 16 6.5 6.5 0 0 1 3 9.5 6.5 6.5 0 0 1 9.5 3m0 2C7 5 5 7 5 9.5S7 14 9.5 14 14 12 14 9.5 12 5 9.5 5"/></svg>
+        
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M20 11v2H8l5.5 5.5-1.42 1.42L4.16 12l7.92-7.92L13.5 5.5 8 11z"/></svg>
+      </label>
+      <nav class="md-search__options" aria-label="查找">
+        
+        <button type="reset" class="md-search__icon md-icon" title="清空当前内容" aria-label="清空当前内容" tabindex="-1">
+          
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M19 6.41 17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12z"/></svg>
+        </button>
+      </nav>
+      
+    </form>
+    <div class="md-search__output">
+      <div class="md-search__scrollwrap" tabindex="0" data-md-scrollfix>
+        <div class="md-search-result" data-md-component="search-result">
+          <div class="md-search-result__meta">
+            正在初始化搜索引擎
+          </div>
+          <ol class="md-search-result__list" role="presentation"></ol>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+      
+    
+    
+      <div class="md-header__source">
+        <a href="https://github.com/songyaolun/transformer-from-scratch" title="前往仓库" class="md-source" data-md-component="source">
+  <div class="md-source__icon md-icon">
+    
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512"><!--! Font Awesome Free 7.1.0 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2025 Fonticons, Inc.--><path d="M173.9 397.4c0 2-2.3 3.6-5.2 3.6-3.3.3-5.6-1.3-5.6-3.6 0-2 2.3-3.6 5.2-3.6 3-.3 5.6 1.3 5.6 3.6m-31.1-4.5c-.7 2 1.3 4.3 4.3 4.9 2.6 1 5.6 0 6.2-2s-1.3-4.3-4.3-5.2c-2.6-.7-5.5.3-6.2 2.3m44.2-1.7c-2.9.7-4.9 2.6-4.6 4.9.3 2 2.9 3.3 5.9 2.6 2.9-.7 4.9-2.6 4.6-4.6-.3-1.9-3-3.2-5.9-2.9M252.8 8C114.1 8 8 113.3 8 252c0 110.9 69.8 205.8 169.5 239.2 12.8 2.3 17.3-5.6 17.3-12.1 0-6.2-.3-40.4-.3-61.4 0 0-70 15-84.7-29.8 0 0-11.4-29.1-27.8-36.6 0 0-22.9-15.7 1.6-15.4 0 0 24.9 2 38.6 25.8 21.9 38.6 58.6 27.5 72.9 20.9 2.3-16 8.8-27.1 16-33.7-55.9-6.2-112.3-14.3-112.3-110.5 0-27.5 7.6-41.3 23.6-58.9-2.6-6.5-11.1-33.3 2.6-67.9 20.9-6.5 69 27 69 27 20-5.6 41.5-8.5 62.8-8.5s42.8 2.9 62.8 8.5c0 0 48.1-33.6 69-27 13.7 34.7 5.2 61.4 2.6 67.9 16 17.7 25.8 31.5 25.8 58.9 0 96.5-58.9 104.2-114.8 110.5 9.2 7.9 17 22.9 17 46.4 0 33.7-.3 75.4-.3 83.6 0 6.5 4.6 14.4 17.3 12.1C436.2 457.8 504 362.9 504 252 504 113.3 391.5 8 252.8 8M105.2 352.9c-1.3 1-1 3.3.7 5.2 1.6 1.6 3.9 2.3 5.2 1 1.3-1 1-3.3-.7-5.2-1.6-1.6-3.9-2.3-5.2-1m-10.8-8.1c-.7 1.3.3 2.9 2.3 3.9 1.6 1 3.6.7 4.3-.7.7-1.3-.3-2.9-2.3-3.9-2-.6-3.6-.3-4.3.7m32.4 35.6c-1.6 1.3-1 4.3 1.3 6.2 2.3 2.3 5.2 2.6 6.5 1 1.3-1.3.7-4.3-1.3-6.2-2.2-2.3-5.2-2.6-6.5-1m-11.4-14.7c-1.6 1-1.6 3.6 0 5.9s4.3 3.3 5.6 2.3c1.6-1.3 1.6-3.9 0-6.2-1.4-2.3-4-3.3-5.6-2"/></svg>
+  </div>
+  <div class="md-source__repository">
+    songyaolun/transformer-from-scratch
+  </div>
+</a>
+      </div>
+    
+  </nav>
+  
+</header>
+    
+    <div class="md-container" data-md-component="container">
+      
+      
+        
+          
+        
+      
+      <main class="md-main" data-md-component="main">
+        <div class="md-main__inner md-grid">
+          
+            
+              
+              <div class="md-sidebar md-sidebar--primary" data-md-component="sidebar" data-md-type="navigation" >
+                <div class="md-sidebar__scrollwrap">
+                  <div class="md-sidebar__inner">
+                    
+
+
+
+<nav class="md-nav md-nav--primary" aria-label="导航栏" data-md-level="0">
+  <label class="md-nav__title" for="__drawer">
+    <a href=".." title="从零实现 Transformer" class="md-nav__button md-logo" aria-label="从零实现 Transformer" data-md-component="logo">
+      
+  
+  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 8a3 3 0 0 0 3-3 3 3 0 0 0-3-3 3 3 0 0 0-3 3 3 3 0 0 0 3 3m0 3.54C9.64 9.35 6.5 8 3 8v11c3.5 0 6.64 1.35 9 3.54 2.36-2.19 5.5-3.54 9-3.54V8c-3.5 0-6.64 1.35-9 3.54"/></svg>
+
+    </a>
+    从零实现 Transformer
+  </label>
+  
+    <div class="md-nav__source">
+      <a href="https://github.com/songyaolun/transformer-from-scratch" title="前往仓库" class="md-source" data-md-component="source">
+  <div class="md-source__icon md-icon">
+    
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512"><!--! Font Awesome Free 7.1.0 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2025 Fonticons, Inc.--><path d="M173.9 397.4c0 2-2.3 3.6-5.2 3.6-3.3.3-5.6-1.3-5.6-3.6 0-2 2.3-3.6 5.2-3.6 3-.3 5.6 1.3 5.6 3.6m-31.1-4.5c-.7 2 1.3 4.3 4.3 4.9 2.6 1 5.6 0 6.2-2s-1.3-4.3-4.3-5.2c-2.6-.7-5.5.3-6.2 2.3m44.2-1.7c-2.9.7-4.9 2.6-4.6 4.9.3 2 2.9 3.3 5.9 2.6 2.9-.7 4.9-2.6 4.6-4.6-.3-1.9-3-3.2-5.9-2.9M252.8 8C114.1 8 8 113.3 8 252c0 110.9 69.8 205.8 169.5 239.2 12.8 2.3 17.3-5.6 17.3-12.1 0-6.2-.3-40.4-.3-61.4 0 0-70 15-84.7-29.8 0 0-11.4-29.1-27.8-36.6 0 0-22.9-15.7 1.6-15.4 0 0 24.9 2 38.6 25.8 21.9 38.6 58.6 27.5 72.9 20.9 2.3-16 8.8-27.1 16-33.7-55.9-6.2-112.3-14.3-112.3-110.5 0-27.5 7.6-41.3 23.6-58.9-2.6-6.5-11.1-33.3 2.6-67.9 20.9-6.5 69 27 69 27 20-5.6 41.5-8.5 62.8-8.5s42.8 2.9 62.8 8.5c0 0 48.1-33.6 69-27 13.7 34.7 5.2 61.4 2.6 67.9 16 17.7 25.8 31.5 25.8 58.9 0 96.5-58.9 104.2-114.8 110.5 9.2 7.9 17 22.9 17 46.4 0 33.7-.3 75.4-.3 83.6 0 6.5 4.6 14.4 17.3 12.1C436.2 457.8 504 362.9 504 252 504 113.3 391.5 8 252.8 8M105.2 352.9c-1.3 1-1 3.3.7 5.2 1.6 1.6 3.9 2.3 5.2 1 1.3-1 1-3.3-.7-5.2-1.6-1.6-3.9-2.3-5.2-1m-10.8-8.1c-.7 1.3.3 2.9 2.3 3.9 1.6 1 3.6.7 4.3-.7.7-1.3-.3-2.9-2.3-3.9-2-.6-3.6-.3-4.3.7m32.4 35.6c-1.6 1.3-1 4.3 1.3 6.2 2.3 2.3 5.2 2.6 6.5 1 1.3-1.3.7-4.3-1.3-6.2-2.2-2.3-5.2-2.6-6.5-1m-11.4-14.7c-1.6 1-1.6 3.6 0 5.9s4.3 3.3 5.6 2.3c1.6-1.3 1.6-3.9 0-6.2-1.4-2.3-4-3.3-5.6-2"/></svg>
+  </div>
+  <div class="md-source__repository">
+    songyaolun/transformer-from-scratch
+  </div>
+</a>
+    </div>
+  
+  <ul class="md-nav__list" data-md-scrollfix>
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href=".." class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    首页
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+    
+  
+  
+  
+    
+    
+    
+    
+      
+        
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--active md-nav__item--section md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_2" checked>
+        
+          
+          <label class="md-nav__link" for="__nav_2" id="__nav_2_label" tabindex="">
+            
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    系列文章
+  
+
+    
+  </span>
+  
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_2_label" aria-expanded="true">
+          <label class="md-nav__title" for="__nav_2">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    系列文章
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../01-pytorch-basics/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    01：环境与前期准备
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+    
+  
+  
+  
+    <li class="md-nav__item md-nav__item--active">
+      
+      <input class="md-nav__toggle md-toggle" type="checkbox" id="__toc">
+      
+      
+        
+      
+      
+        <label class="md-nav__link md-nav__link--active" for="__toc">
+          
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    02：数据处理与 Transformer 输入层
+  
+
+    
+  </span>
+  
+  
+
+          <span class="md-nav__icon md-icon"></span>
+        </label>
+      
+      <a href="./" class="md-nav__link md-nav__link--active">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    02：数据处理与 Transformer 输入层
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+      
+        
+
+<nav class="md-nav md-nav--secondary" aria-label="目录">
+  
+  
+  
+    
+  
+  
+    <label class="md-nav__title" for="__toc">
+      <span class="md-nav__icon md-icon"></span>
+      目录
+    </label>
+    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
+      
+        <li class="md-nav__item">
+  <a href="#_1" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        系列目录
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#_2" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        本篇流水线全景
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#1" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        1. 构建迷你翻译数据集和词表
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#2-dataset-dataloaderpadding" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        2. Dataset 与 DataLoader（Padding）
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="2. Dataset 与 DataLoader（Padding）">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#21-dataset" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        2.1 自定义 Dataset
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#22-collate-padding" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        2.2 Collate 函数与 Padding
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#3-token-embedding" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        3. 词嵌入（Token Embedding）
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="3. 词嵌入（Token Embedding）">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#31-embedding" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        3.1 Embedding 的本质就是查表
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#32" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        3.2 缩放因子
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#4-positional-encoding" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        4. 位置编码（Positional Encoding）
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#5-embedding-positional-encoding" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        5. 组合 Embedding + Positional Encoding
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#_3" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        小结
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#pe-rope" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        进阶：从正弦 PE 到 RoPE
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#_4" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        参考文章
+      
+    </span>
+  </a>
+  
+</li>
+      
+    </ul>
+  
+</nav>
+      
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../03-multi-head-attention/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    03：多头注意力机制与核心组件
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../04-transformer-assembly/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    04：模型组装
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../05-training-and-inference/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    05：训练、推理与可视化
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+  </ul>
+</nav>
+                  </div>
+                </div>
+              </div>
+            
+            
+              
+              <div class="md-sidebar md-sidebar--secondary" data-md-component="sidebar" data-md-type="toc" >
+                <div class="md-sidebar__scrollwrap">
+                  <div class="md-sidebar__inner">
+                    
+
+<nav class="md-nav md-nav--secondary" aria-label="目录">
+  
+  
+  
+    
+  
+  
+    <label class="md-nav__title" for="__toc">
+      <span class="md-nav__icon md-icon"></span>
+      目录
+    </label>
+    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
+      
+        <li class="md-nav__item">
+  <a href="#_1" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        系列目录
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#_2" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        本篇流水线全景
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#1" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        1. 构建迷你翻译数据集和词表
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#2-dataset-dataloaderpadding" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        2. Dataset 与 DataLoader（Padding）
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="2. Dataset 与 DataLoader（Padding）">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#21-dataset" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        2.1 自定义 Dataset
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#22-collate-padding" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        2.2 Collate 函数与 Padding
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#3-token-embedding" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        3. 词嵌入（Token Embedding）
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="3. 词嵌入（Token Embedding）">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#31-embedding" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        3.1 Embedding 的本质就是查表
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#32" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        3.2 缩放因子
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#4-positional-encoding" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        4. 位置编码（Positional Encoding）
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#5-embedding-positional-encoding" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        5. 组合 Embedding + Positional Encoding
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#_3" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        小结
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#pe-rope" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        进阶：从正弦 PE 到 RoPE
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#_4" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        参考文章
+      
+    </span>
+  </a>
+  
+</li>
+      
+    </ul>
+  
+</nav>
+                  </div>
+                </div>
+              </div>
+            
+          
+          
+            <div class="md-content" data-md-component="content">
+              
+              <article class="md-content__inner md-typeset">
+                
+                  
+
+
+  
+  
+
+
+<h1 id="ai-transformer-02-transformer">动手学AI ⚡️ 手写Transformer 02：数据处理与 Transformer 输入层<a class="headerlink" href="#ai-transformer-02-transformer" title="Permanent link">&para;</a></h1>
+<blockquote>
+<p>上一篇我们掌握了 PyTorch 的基础操作，本篇带你逐行手写从原始文本到模型输入的完整流水线——一句 <code>I love deep learning</code> 在进入 Transformer 之前，会被切碎、编号、填充、升维、注入位置。写完这些代码，你就亲手打通了 Transformer 的"感官系统"。</p>
+</blockquote>
+<h2 id="_1">系列目录<a class="headerlink" href="#_1" title="Permanent link">&para;</a></h2>
+<ol>
+<li><a href="../01-pytorch-basics/">环境与前期准备</a></li>
+<li><strong>数据处理与 Transformer 输入层</strong>（本篇）</li>
+<li><a href="../03-multi-head-attention/">多头注意力机制与核心组件</a></li>
+<li><a href="../04-transformer-assembly/">模型组装</a></li>
+<li><a href="../05-training-and-inference/">训练、推理与可视化</a></li>
+</ol>
+<hr />
+<h2 id="_2">本篇流水线全景<a class="headerlink" href="#_2" title="Permanent link">&para;</a></h2>
+<p>本篇覆盖下图中从原始文本到模型输入的全部环节。每一节对应一个阶段，建议对照此图阅读：</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a>原始文本 ──→ 分词 ──→ 词表索引 ──→ Padding对齐
+<a id="__codelineno-0-2" name="__codelineno-0-2" href="#__codelineno-0-2"></a> (§1)        (§1)       (§1)            (§2)
+<a id="__codelineno-0-3" name="__codelineno-0-3" href="#__codelineno-0-3"></a>──→ Token Embedding ──→ ×√d_model
+<a id="__codelineno-0-4" name="__codelineno-0-4" href="#__codelineno-0-4"></a>      (§3)                  (§3.2)
+<a id="__codelineno-0-5" name="__codelineno-0-5" href="#__codelineno-0-5"></a>──→ + 位置编码 ──→ Dropout ──→ 模型输入
+<a id="__codelineno-0-6" name="__codelineno-0-6" href="#__codelineno-0-6"></a>       (§4)          (§5)       (§5)
+</code></pre></div>
+<hr />
+<h2 id="1">1. 构建迷你翻译数据集和词表<a class="headerlink" href="#1" title="Permanent link">&para;</a></h2>
+<p>我们先造一个 5 句话的迷你翻译数据集，目的不是翻译准确，而是看清每个 Token 的完整旅程。之后你就理解了——大模型按 Token 计费，因为 <strong>Token 才是计算原子</strong>。</p>
+<p><img alt="词表示意图" src="../images/02/0.png" /></p>
+<center>图源：https://luxiangdong.com/2023/04/19/transformer/</center>
+
+<p><strong>原始数据与词表构建</strong></p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-1-1" name="__codelineno-1-1" href="#__codelineno-1-1"></a><span class="c1"># 构建原始数据集，source 是英文，target 是中文</span>
+<a id="__codelineno-1-2" name="__codelineno-1-2" href="#__codelineno-1-2"></a><span class="n">raw_data</span> <span class="o">=</span> <span class="p">[</span>
+<a id="__codelineno-1-3" name="__codelineno-1-3" href="#__codelineno-1-3"></a>    <span class="p">(</span><span class="s2">&quot;I love deep learning&quot;</span><span class="p">,</span> <span class="s2">&quot;我爱深度学习&quot;</span><span class="p">),</span>
+<a id="__codelineno-1-4" name="__codelineno-1-4" href="#__codelineno-1-4"></a>    <span class="p">(</span><span class="s2">&quot;Transformer is all you need&quot;</span><span class="p">,</span> <span class="s2">&quot;你需要的就是变形金刚&quot;</span><span class="p">),</span>
+<a id="__codelineno-1-5" name="__codelineno-1-5" href="#__codelineno-1-5"></a>    <span class="p">(</span><span class="s2">&quot;Attention mechanism is great&quot;</span><span class="p">,</span> <span class="s2">&quot;注意力机制很棒&quot;</span><span class="p">),</span>
+<a id="__codelineno-1-6" name="__codelineno-1-6" href="#__codelineno-1-6"></a>    <span class="p">(</span><span class="s2">&quot;hello world&quot;</span><span class="p">,</span> <span class="s2">&quot;你好世界&quot;</span><span class="p">),</span>
+<a id="__codelineno-1-7" name="__codelineno-1-7" href="#__codelineno-1-7"></a>    <span class="p">(</span><span class="s2">&quot;PyTorch is easy to learn&quot;</span><span class="p">,</span> <span class="s2">&quot;PyTorch很容易学&quot;</span><span class="p">)</span>
+<a id="__codelineno-1-8" name="__codelineno-1-8" href="#__codelineno-1-8"></a><span class="p">]</span>
+<a id="__codelineno-1-9" name="__codelineno-1-9" href="#__codelineno-1-9"></a>
+<a id="__codelineno-1-10" name="__codelineno-1-10" href="#__codelineno-1-10"></a><span class="c1"># 构建词表</span>
+<a id="__codelineno-1-11" name="__codelineno-1-11" href="#__codelineno-1-11"></a><span class="c1"># pad: 填充, sos: 开始, eos: 结束</span>
+<a id="__codelineno-1-12" name="__codelineno-1-12" href="#__codelineno-1-12"></a><span class="n">src_vocab</span> <span class="o">=</span> <span class="p">{</span><span class="s1">&#39;&lt;pad&gt;&#39;</span><span class="p">:</span> <span class="mi">0</span><span class="p">,</span> <span class="s1">&#39;&lt;sos&gt;&#39;</span><span class="p">:</span> <span class="mi">1</span><span class="p">,</span> <span class="s1">&#39;&lt;eos&gt;&#39;</span><span class="p">:</span> <span class="mi">2</span><span class="p">}</span>
+<a id="__codelineno-1-13" name="__codelineno-1-13" href="#__codelineno-1-13"></a><span class="n">tgt_vocab</span> <span class="o">=</span> <span class="p">{</span><span class="s1">&#39;&lt;pad&gt;&#39;</span><span class="p">:</span> <span class="mi">0</span><span class="p">,</span> <span class="s1">&#39;&lt;sos&gt;&#39;</span><span class="p">:</span> <span class="mi">1</span><span class="p">,</span> <span class="s1">&#39;&lt;eos&gt;&#39;</span><span class="p">:</span> <span class="mi">2</span><span class="p">}</span>
+<a id="__codelineno-1-14" name="__codelineno-1-14" href="#__codelineno-1-14"></a>
+<a id="__codelineno-1-15" name="__codelineno-1-15" href="#__codelineno-1-15"></a><span class="c1"># 扫描数据集，构建词表</span>
+<a id="__codelineno-1-16" name="__codelineno-1-16" href="#__codelineno-1-16"></a><span class="k">for</span> <span class="n">src</span><span class="p">,</span> <span class="n">tar</span> <span class="ow">in</span> <span class="n">raw_data</span><span class="p">:</span>
+<a id="__codelineno-1-17" name="__codelineno-1-17" href="#__codelineno-1-17"></a>    <span class="k">for</span> <span class="n">word</span> <span class="ow">in</span> <span class="n">src</span><span class="o">.</span><span class="n">split</span><span class="p">():</span>      <span class="c1"># 英文用空格分词</span>
+<a id="__codelineno-1-18" name="__codelineno-1-18" href="#__codelineno-1-18"></a>        <span class="k">if</span> <span class="n">word</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">src_vocab</span><span class="p">:</span>
+<a id="__codelineno-1-19" name="__codelineno-1-19" href="#__codelineno-1-19"></a>            <span class="n">src_vocab</span><span class="p">[</span><span class="n">word</span><span class="p">]</span> <span class="o">=</span> <span class="nb">len</span><span class="p">(</span><span class="n">src_vocab</span><span class="p">)</span>
+<a id="__codelineno-1-20" name="__codelineno-1-20" href="#__codelineno-1-20"></a>    <span class="k">for</span> <span class="n">word</span> <span class="ow">in</span> <span class="n">tar</span><span class="p">:</span>              <span class="c1"># 中文按单个字符遍历</span>
+<a id="__codelineno-1-21" name="__codelineno-1-21" href="#__codelineno-1-21"></a>        <span class="k">if</span> <span class="n">word</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">tgt_vocab</span><span class="p">:</span>
+<a id="__codelineno-1-22" name="__codelineno-1-22" href="#__codelineno-1-22"></a>            <span class="n">tgt_vocab</span><span class="p">[</span><span class="n">word</span><span class="p">]</span> <span class="o">=</span> <span class="nb">len</span><span class="p">(</span><span class="n">tgt_vocab</span><span class="p">)</span>
+<a id="__codelineno-1-23" name="__codelineno-1-23" href="#__codelineno-1-23"></a>
+<a id="__codelineno-1-24" name="__codelineno-1-24" href="#__codelineno-1-24"></a><span class="c1"># 创建反向词表（索引 → 单词）</span>
+<a id="__codelineno-1-25" name="__codelineno-1-25" href="#__codelineno-1-25"></a><span class="n">idx2src</span> <span class="o">=</span> <span class="p">{</span><span class="n">v</span><span class="p">:</span> <span class="n">k</span> <span class="k">for</span> <span class="n">k</span><span class="p">,</span> <span class="n">v</span> <span class="ow">in</span> <span class="n">src_vocab</span><span class="o">.</span><span class="n">items</span><span class="p">()}</span>
+<a id="__codelineno-1-26" name="__codelineno-1-26" href="#__codelineno-1-26"></a><span class="n">idx2tar</span> <span class="o">=</span> <span class="p">{</span><span class="n">v</span><span class="p">:</span> <span class="n">k</span> <span class="k">for</span> <span class="n">k</span><span class="p">,</span> <span class="n">v</span> <span class="ow">in</span> <span class="n">tgt_vocab</span><span class="o">.</span><span class="n">items</span><span class="p">()}</span>
+<a id="__codelineno-1-27" name="__codelineno-1-27" href="#__codelineno-1-27"></a>
+<a id="__codelineno-1-28" name="__codelineno-1-28" href="#__codelineno-1-28"></a><span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;源语言词表大小: </span><span class="si">{</span><span class="nb">len</span><span class="p">(</span><span class="n">src_vocab</span><span class="p">)</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+<a id="__codelineno-1-29" name="__codelineno-1-29" href="#__codelineno-1-29"></a><span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;目标语言词表大小: </span><span class="si">{</span><span class="nb">len</span><span class="p">(</span><span class="n">tgt_vocab</span><span class="p">)</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+</code></pre></div>
+<details class="question">
+<summary>📖 为什么词表中需要 <code>&lt;pad&gt;</code>, <code>&lt;sos&gt;</code>, <code>&lt;eos&gt;</code> 三个特殊 token？能不能只保留一个？</summary>
+<p><strong>不能。</strong> 三者角色是不一样的：</p>
+<ul>
+<li><code>&lt;pad&gt;</code>：填充短序列到末尾保证 batch 统一长度，后续会被 attention mask 屏蔽，不参与实际计算</li>
+<li><code>&lt;sos&gt;</code>：告诉 Decoder "开始生成"，它是 Decoder 推理时的第一个输入 token</li>
+<li><code>&lt;eos&gt;</code>：告诉模型 "到此结束"，推理时生成 <code>&lt;eos&gt;</code> 就停止</li>
+</ul>
+</details>
+<p><strong>关于词表大小</strong>：给大家一个数字感受下。英文日常交流使用 3000-4000 个单词就可以覆盖 90% 的口语场景，常用的汉字大概在 3000-5000 个之间。</p>
+<table>
+<thead>
+<tr>
+<th>维度</th>
+<th>英文</th>
+<th>中文</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>人类常用基础单元</td>
+<td>~20,000 单词（大学水平）</td>
+<td>~3,500 汉字（常用字）</td>
+</tr>
+<tr>
+<td>人类常用词汇/短语</td>
+<td>~50,000（韦氏基础词）</td>
+<td>~56,000 常用词（现代汉语词表）</td>
+</tr>
+</tbody>
+</table>
+<p>GPT-3 使用约 50K 的词表（主要英文），Qwen3 已经扩展到 150K（中英文），GPT-4o 更是 200K。词表越大，训练数据量也越大。</p>
+<p>现在每个 token 有了自己的编号。但问题来了——句子长短不一，怎么喂给模型？</p>
+<hr />
+<h2 id="2-dataset-dataloaderpadding">2. Dataset 与 DataLoader（Padding）<a class="headerlink" href="#2-dataset-dataloaderpadding" title="Permanent link">&para;</a></h2>
+<details class="question">
+<summary>📖 怎么把长短不一的句子塞到同一个 Batch 中呢？</summary>
+<p><strong>把短句末尾补 0 到统一长度，后续用 mask 告诉模型忽略这些填充位。</strong> 这就像考试时答题卡设计为有 50 个格子，卷子只有 30 道题，你也只写了 30 个答案，剩下 20 个空着——阅卷机器会自动跳过空格。</p>
+</details>
+<h3 id="21-dataset">2.1 自定义 Dataset<a class="headerlink" href="#21-dataset" title="Permanent link">&para;</a></h3>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-2-1" name="__codelineno-2-1" href="#__codelineno-2-1"></a><span class="k">class</span><span class="w"> </span><span class="nc">ToyTranslationDataset</span><span class="p">(</span><span class="n">data</span><span class="o">.</span><span class="n">Dataset</span><span class="p">):</span>
+<a id="__codelineno-2-2" name="__codelineno-2-2" href="#__codelineno-2-2"></a>    <span class="k">def</span><span class="w"> </span><span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">data</span><span class="p">,</span> <span class="n">src_vocab</span><span class="p">,</span> <span class="n">tgt_vocab</span><span class="p">):</span>
+<a id="__codelineno-2-3" name="__codelineno-2-3" href="#__codelineno-2-3"></a>        <span class="bp">self</span><span class="o">.</span><span class="n">data</span> <span class="o">=</span> <span class="n">data</span>
+<a id="__codelineno-2-4" name="__codelineno-2-4" href="#__codelineno-2-4"></a>        <span class="bp">self</span><span class="o">.</span><span class="n">src_vocab</span> <span class="o">=</span> <span class="n">src_vocab</span>
+<a id="__codelineno-2-5" name="__codelineno-2-5" href="#__codelineno-2-5"></a>        <span class="bp">self</span><span class="o">.</span><span class="n">tgt_vocab</span> <span class="o">=</span> <span class="n">tgt_vocab</span>
+<a id="__codelineno-2-6" name="__codelineno-2-6" href="#__codelineno-2-6"></a>
+<a id="__codelineno-2-7" name="__codelineno-2-7" href="#__codelineno-2-7"></a>    <span class="k">def</span><span class="w"> </span><span class="fm">__len__</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+<a id="__codelineno-2-8" name="__codelineno-2-8" href="#__codelineno-2-8"></a>        <span class="k">return</span> <span class="nb">len</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">data</span><span class="p">)</span>
+<a id="__codelineno-2-9" name="__codelineno-2-9" href="#__codelineno-2-9"></a>
+<a id="__codelineno-2-10" name="__codelineno-2-10" href="#__codelineno-2-10"></a>    <span class="k">def</span><span class="w"> </span><span class="fm">__getitem__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">idx</span><span class="p">):</span>
+<a id="__codelineno-2-11" name="__codelineno-2-11" href="#__codelineno-2-11"></a>        <span class="n">src_text</span><span class="p">,</span> <span class="n">tgt_text</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">data</span><span class="p">[</span><span class="n">idx</span><span class="p">]</span>
+<a id="__codelineno-2-12" name="__codelineno-2-12" href="#__codelineno-2-12"></a>        <span class="c1"># 查找每个 token 在词表中的索引</span>
+<a id="__codelineno-2-13" name="__codelineno-2-13" href="#__codelineno-2-13"></a>        <span class="n">src_indices</span> <span class="o">=</span> <span class="p">[</span><span class="bp">self</span><span class="o">.</span><span class="n">src_vocab</span><span class="p">[</span><span class="n">word</span><span class="p">]</span> <span class="k">for</span> <span class="n">word</span> <span class="ow">in</span> <span class="n">src_text</span><span class="o">.</span><span class="n">split</span><span class="p">()]</span>
+<a id="__codelineno-2-14" name="__codelineno-2-14" href="#__codelineno-2-14"></a>        <span class="n">tgt_indices</span> <span class="o">=</span> <span class="p">[</span><span class="bp">self</span><span class="o">.</span><span class="n">tgt_vocab</span><span class="p">[</span><span class="n">word</span><span class="p">]</span> <span class="k">for</span> <span class="n">word</span> <span class="ow">in</span> <span class="n">tgt_text</span><span class="p">]</span>
+<a id="__codelineno-2-15" name="__codelineno-2-15" href="#__codelineno-2-15"></a>        <span class="k">return</span> <span class="n">torch</span><span class="o">.</span><span class="n">tensor</span><span class="p">(</span><span class="n">src_indices</span><span class="p">),</span> <span class="n">torch</span><span class="o">.</span><span class="n">tensor</span><span class="p">(</span><span class="n">tgt_indices</span><span class="p">)</span>
+</code></pre></div>
+<h3 id="22-collate-padding">2.2 Collate 函数与 Padding<a class="headerlink" href="#22-collate-padding" title="Permanent link">&para;</a></h3>
+<p>神经网络要求输入是规整的矩阵，不能是长度参差不齐的列表。</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-3-1" name="__codelineno-3-1" href="#__codelineno-3-1"></a><span class="k">def</span><span class="w"> </span><span class="nf">collate_fn</span><span class="p">(</span><span class="n">batch</span><span class="p">):</span>
+<a id="__codelineno-3-2" name="__codelineno-3-2" href="#__codelineno-3-2"></a><span class="w">    </span><span class="sd">&quot;&quot;&quot;自定义 batch 处理：补前后标识 + 补 0&quot;&quot;&quot;</span>
+<a id="__codelineno-3-3" name="__codelineno-3-3" href="#__codelineno-3-3"></a>    <span class="n">src_batch</span><span class="p">,</span> <span class="n">tgt_batch</span> <span class="o">=</span> <span class="p">[],</span> <span class="p">[]</span>
+<a id="__codelineno-3-4" name="__codelineno-3-4" href="#__codelineno-3-4"></a>
+<a id="__codelineno-3-5" name="__codelineno-3-5" href="#__codelineno-3-5"></a>    <span class="k">for</span> <span class="n">src_sample</span><span class="p">,</span> <span class="n">tgt_sample</span> <span class="ow">in</span> <span class="n">batch</span><span class="p">:</span>
+<a id="__codelineno-3-6" name="__codelineno-3-6" href="#__codelineno-3-6"></a>        <span class="n">src_batch</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">src_sample</span><span class="p">)</span>
+<a id="__codelineno-3-7" name="__codelineno-3-7" href="#__codelineno-3-7"></a>        <span class="c1"># 目标序列拼上 &lt;sos&gt; 和 &lt;eos&gt;</span>
+<a id="__codelineno-3-8" name="__codelineno-3-8" href="#__codelineno-3-8"></a>        <span class="n">tgt_processed</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">cat</span><span class="p">([</span>
+<a id="__codelineno-3-9" name="__codelineno-3-9" href="#__codelineno-3-9"></a>            <span class="n">torch</span><span class="o">.</span><span class="n">tensor</span><span class="p">([</span><span class="n">tgt_vocab</span><span class="p">[</span><span class="s1">&#39;&lt;sos&gt;&#39;</span><span class="p">]]),</span>
+<a id="__codelineno-3-10" name="__codelineno-3-10" href="#__codelineno-3-10"></a>            <span class="n">tgt_sample</span><span class="p">,</span>
+<a id="__codelineno-3-11" name="__codelineno-3-11" href="#__codelineno-3-11"></a>            <span class="n">torch</span><span class="o">.</span><span class="n">tensor</span><span class="p">([</span><span class="n">tgt_vocab</span><span class="p">[</span><span class="s1">&#39;&lt;eos&gt;&#39;</span><span class="p">]])</span>
+<a id="__codelineno-3-12" name="__codelineno-3-12" href="#__codelineno-3-12"></a>        <span class="p">])</span>
+<a id="__codelineno-3-13" name="__codelineno-3-13" href="#__codelineno-3-13"></a>        <span class="n">tgt_batch</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">tgt_processed</span><span class="p">)</span>
+<a id="__codelineno-3-14" name="__codelineno-3-14" href="#__codelineno-3-14"></a>
+<a id="__codelineno-3-15" name="__codelineno-3-15" href="#__codelineno-3-15"></a>    <span class="c1"># padding_value=0 就是词表中的 &lt;pad&gt;</span>
+<a id="__codelineno-3-16" name="__codelineno-3-16" href="#__codelineno-3-16"></a>    <span class="n">src_batch</span> <span class="o">=</span> <span class="n">nn</span><span class="o">.</span><span class="n">utils</span><span class="o">.</span><span class="n">rnn</span><span class="o">.</span><span class="n">pad_sequence</span><span class="p">(</span><span class="n">src_batch</span><span class="p">,</span> <span class="n">padding_value</span><span class="o">=</span><span class="mi">0</span><span class="p">,</span> <span class="n">batch_first</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+<a id="__codelineno-3-17" name="__codelineno-3-17" href="#__codelineno-3-17"></a>    <span class="n">tgt_batch</span> <span class="o">=</span> <span class="n">nn</span><span class="o">.</span><span class="n">utils</span><span class="o">.</span><span class="n">rnn</span><span class="o">.</span><span class="n">pad_sequence</span><span class="p">(</span><span class="n">tgt_batch</span><span class="p">,</span> <span class="n">padding_value</span><span class="o">=</span><span class="mi">0</span><span class="p">,</span> <span class="n">batch_first</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+<a id="__codelineno-3-18" name="__codelineno-3-18" href="#__codelineno-3-18"></a>    <span class="k">return</span> <span class="n">src_batch</span><span class="p">,</span> <span class="n">tgt_batch</span>
+<a id="__codelineno-3-19" name="__codelineno-3-19" href="#__codelineno-3-19"></a>
+<a id="__codelineno-3-20" name="__codelineno-3-20" href="#__codelineno-3-20"></a>
+<a id="__codelineno-3-21" name="__codelineno-3-21" href="#__codelineno-3-21"></a><span class="n">dataset</span> <span class="o">=</span> <span class="n">ToyTranslationDataset</span><span class="p">(</span><span class="n">raw_data</span><span class="p">,</span> <span class="n">src_vocab</span><span class="p">,</span> <span class="n">tgt_vocab</span><span class="p">)</span>
+<a id="__codelineno-3-22" name="__codelineno-3-22" href="#__codelineno-3-22"></a><span class="n">loader</span> <span class="o">=</span> <span class="n">data</span><span class="o">.</span><span class="n">DataLoader</span><span class="p">(</span><span class="n">dataset</span><span class="p">,</span> <span class="n">batch_size</span><span class="o">=</span><span class="mi">2</span><span class="p">,</span> <span class="n">shuffle</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span> <span class="n">collate_fn</span><span class="o">=</span><span class="n">collate_fn</span><span class="p">)</span>
+<a id="__codelineno-3-23" name="__codelineno-3-23" href="#__codelineno-3-23"></a>
+<a id="__codelineno-3-24" name="__codelineno-3-24" href="#__codelineno-3-24"></a><span class="n">src_batch</span><span class="p">,</span> <span class="n">tgt_batch</span> <span class="o">=</span> <span class="nb">next</span><span class="p">(</span><span class="nb">iter</span><span class="p">(</span><span class="n">loader</span><span class="p">))</span>
+<a id="__codelineno-3-25" name="__codelineno-3-25" href="#__codelineno-3-25"></a>
+<a id="__codelineno-3-26" name="__codelineno-3-26" href="#__codelineno-3-26"></a><span class="nb">print</span><span class="p">(</span><span class="s2">&quot;处理后 Batch 数据的形状&quot;</span><span class="p">)</span>
+<a id="__codelineno-3-27" name="__codelineno-3-27" href="#__codelineno-3-27"></a><span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Source Batch Shape: </span><span class="si">{</span><span class="n">src_batch</span><span class="o">.</span><span class="n">shape</span><span class="si">}</span><span class="s2">  (Batch, Src_len)&quot;</span><span class="p">)</span>
+<a id="__codelineno-3-28" name="__codelineno-3-28" href="#__codelineno-3-28"></a><span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Target Batch Shape: </span><span class="si">{</span><span class="n">tgt_batch</span><span class="o">.</span><span class="n">shape</span><span class="si">}</span><span class="s2">  (Batch, tgt_len)&quot;</span><span class="p">)</span>
+<a id="__codelineno-3-29" name="__codelineno-3-29" href="#__codelineno-3-29"></a><span class="nb">print</span><span class="p">(</span><span class="s2">&quot;</span><span class="se">\n</span><span class="s2">Source:</span><span class="se">\n</span><span class="s2">&quot;</span><span class="p">,</span> <span class="n">src_batch</span><span class="p">)</span>
+<a id="__codelineno-3-30" name="__codelineno-3-30" href="#__codelineno-3-30"></a><span class="nb">print</span><span class="p">(</span><span class="s2">&quot;Target:</span><span class="se">\n</span><span class="s2">&quot;</span><span class="p">,</span> <span class="n">tgt_batch</span><span class="p">)</span>
+</code></pre></div>
+<p><strong>解读</strong>：batch=2，源数据（英文）一个长度为 4，一个长度为 5，短的句子最后补 0。目标数据加了 <code>&lt;sos&gt;</code> 和 <code>&lt;eos&gt;</code>，最长的句子长度比原来多了 2，其他句子也补 0 到同一长度。</p>
+<details class="question">
+<summary>📖 <code>pad_sequence</code> 和 <code>collate_fn</code> 各自承担什么职责？为什么不能只用其中一个？</summary>
+<p>协作关系：<code>collate_fn</code> 是 DataLoader 的"组装车间主任"，它负责拿到一个 batch 的样本列表后，先将 src 和 tgt 分别收集，再分别调用 <code>pad_sequence</code> 进行填充对齐，最终输出 <code>(src_batch, tgt_batch)</code> 两个对齐的张量。两者是流程编排与具体操作的关系。</p>
+</details>
+<p>Padding 让数据对齐了，但每个 token 还只是一个光秃秃的整数索引。接下来给它们"长肉"。</p>
+<hr />
+<h2 id="3-token-embedding">3. 词嵌入（Token Embedding）<a class="headerlink" href="#3-token-embedding" title="Permanent link">&para;</a></h2>
+<p>经过 DataLoader，我们已经把人类的语言初步转换成了数字（每个 Token 对应一个词表 Index）。</p>
+<details class="question">
+<summary>📖 我们能直接用这些 Index 去训练吗？这也是数字对吧，计算机也能理解。</summary>
+<p><strong>不能。</strong> 类比一下：老师给你布置了一本寒假作业，只给了你目录，让你把整本作业连题目带答案都写出来——信息太少了。</p>
+<p>我们需要<strong>把词扩展到更高维度</strong>，让这个词在现实生活中的众多含义都能被数字表示。比如"香蕉"的含义有水果、黄色、热带、弯的等等，一个编号装不下这些。Index 是给每个 token 一个"身份证号"，Embedding 给每个 token 一张"个人简历"，更多维度，每一维描述一个语义特征。</p>
+<table>
+<thead>
+<tr>
+<th>整数索引</th>
+<th>Embedding 向量</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>1 维，只有"编号"信息</td>
+<td>高维（128-2048 维），每个维度都可以编码不同的语义特征</td>
+</tr>
+<tr>
+<td>无法表达词与词之间的相似度</td>
+<td>向量距离天然反映语义距离（如 <code>king - man + woman ≈ queen</code>）</td>
+</tr>
+</tbody>
+</table>
+</details>
+<p><img alt="Embedding 示意图" src="../images/02/1.png" /></p>
+<center>图源：https://www.3blue1brown.com/lessons/gpt</center>
+
+<p>上图左上角是一个 Embedding 矩阵，右下角演示了一些词汇如何用 Embedding 向量表示，仅仅是高维映射到低维的一个演示。下图更贴切地展示了某些有相似含义的 Embedding 向量会聚集在一起，如球类、水果、交通工具、建筑物等。</p>
+<p><img alt="Embedding 语义聚类" src="../images/02/2.png" /></p>
+<center>图源：https://luxiangdong.com/2023/04/19/transformer/</center>
+
+<p>理解了为什么需要 Embedding，我们来看它的实现——其实就是查表。</p>
+<h3 id="31-embedding">3.1 Embedding 的本质就是查表<a class="headerlink" href="#31-embedding" title="Permanent link">&para;</a></h3>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-4-1" name="__codelineno-4-1" href="#__codelineno-4-1"></a><span class="c1"># 词表大小 10，向量维度 4</span>
+<a id="__codelineno-4-2" name="__codelineno-4-2" href="#__codelineno-4-2"></a><span class="n">emb_layer</span> <span class="o">=</span> <span class="n">nn</span><span class="o">.</span><span class="n">Embedding</span><span class="p">(</span><span class="n">num_embeddings</span><span class="o">=</span><span class="mi">10</span><span class="p">,</span> <span class="n">embedding_dim</span><span class="o">=</span><span class="mi">4</span><span class="p">)</span>
+<a id="__codelineno-4-3" name="__codelineno-4-3" href="#__codelineno-4-3"></a>
+<a id="__codelineno-4-4" name="__codelineno-4-4" href="#__codelineno-4-4"></a><span class="nb">print</span><span class="p">(</span><span class="s2">&quot;Embedding 权重矩阵形状：&quot;</span><span class="p">,</span> <span class="n">emb_layer</span><span class="o">.</span><span class="n">weight</span><span class="o">.</span><span class="n">shape</span><span class="p">)</span>  <span class="c1"># (10, 4)</span>
+<a id="__codelineno-4-5" name="__codelineno-4-5" href="#__codelineno-4-5"></a>
+<a id="__codelineno-4-6" name="__codelineno-4-6" href="#__codelineno-4-6"></a><span class="n">input_ids</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">tensor</span><span class="p">([</span><span class="mi">3</span><span class="p">,</span> <span class="mi">0</span><span class="p">,</span> <span class="mi">7</span><span class="p">])</span>
+<a id="__codelineno-4-7" name="__codelineno-4-7" href="#__codelineno-4-7"></a><span class="n">outputs</span> <span class="o">=</span> <span class="n">emb_layer</span><span class="p">(</span><span class="n">input_ids</span><span class="p">)</span>
+<a id="__codelineno-4-8" name="__codelineno-4-8" href="#__codelineno-4-8"></a>
+<a id="__codelineno-4-9" name="__codelineno-4-9" href="#__codelineno-4-9"></a><span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;输出形状: </span><span class="si">{</span><span class="n">outputs</span><span class="o">.</span><span class="n">shape</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>  <span class="c1"># (3, 4)</span>
+<a id="__codelineno-4-10" name="__codelineno-4-10" href="#__codelineno-4-10"></a>
+<a id="__codelineno-4-11" name="__codelineno-4-11" href="#__codelineno-4-11"></a><span class="c1"># 验证：Embedding 本质就是查表</span>
+<a id="__codelineno-4-12" name="__codelineno-4-12" href="#__codelineno-4-12"></a><span class="nb">print</span><span class="p">(</span><span class="n">torch</span><span class="o">.</span><span class="n">equal</span><span class="p">(</span><span class="n">emb_layer</span><span class="o">.</span><span class="n">weight</span><span class="o">.</span><span class="n">data</span><span class="p">[</span><span class="mi">3</span><span class="p">],</span> <span class="n">outputs</span><span class="o">.</span><span class="n">data</span><span class="p">[</span><span class="mi">0</span><span class="p">]))</span>  <span class="c1"># True</span>
+</code></pre></div>
+<p>验证完了原理，接下来让 token 升维到高维空间，让它能更完整地表示自己。</p>
+<p><img alt="Embedding 升维示意" src="../images/02/3.png" /></p>
+<center>图源：https://luxiangdong.com/2023/04/19/transformer/</center>
+
+<p><code>nn.Embedding(vocab_size, emb_size)</code> 就是一张 <code>vocab_size × emb_size</code> 的查找表。在早期 NLP 中（如使用 Word2Vec 的时代），这张表通常由单独的 Embedding 模型预训练好后冻结使用，不随下游模型更新。但在现代 Transformer 架构中，这张表默认是随模型一起训练的。</p>
+<p>你可能注意到代码里还有个 <code>d_model</code>——它和 <code>emb_size</code> 是同一个值，只是视角不同：<code>emb_size</code> 是 Embedding 层的设计参数，<code>d_model</code> 是整个模型的数据通道宽度。</p>
+<h3 id="32">3.2 缩放因子<a class="headerlink" href="#32" title="Permanent link">&para;</a></h3>
+<p>论文中有一个 <code>Embedding * sqrt(d_model)</code> 的操作。为什么？为了让语义信息给予更大的权重，Embedding 的初始化标准差约 <code>1/√d_model</code>，乘以 <code>√d_model</code> 后拉到标准差 ≈ 1，和位置编码（范围 [-1,1]）在同一量级，避免被位置信息"功高盖主"。</p>
+<p>打个比方：你喝一杯咖啡，浓缩咖啡+水（语义向量 × √d_model）配糖浆（位置编码），风味层次分明；要是浓缩咖啡直接加糖浆（语义向量 + 位置编码），喝到的就是一杯奇怪的饮料。</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-5-1" name="__codelineno-5-1" href="#__codelineno-5-1"></a><span class="n">d_model</span> <span class="o">=</span> <span class="mi">512</span>
+<a id="__codelineno-5-2" name="__codelineno-5-2" href="#__codelineno-5-2"></a><span class="n">emb_large</span> <span class="o">=</span> <span class="n">nn</span><span class="o">.</span><span class="n">Embedding</span><span class="p">(</span><span class="mi">100</span><span class="p">,</span> <span class="n">d_model</span><span class="p">)</span>
+<a id="__codelineno-5-3" name="__codelineno-5-3" href="#__codelineno-5-3"></a><span class="n">sample</span> <span class="o">=</span> <span class="n">emb_large</span><span class="p">(</span><span class="n">torch</span><span class="o">.</span><span class="n">tensor</span><span class="p">([</span><span class="mi">1</span><span class="p">]))</span>
+<a id="__codelineno-5-4" name="__codelineno-5-4" href="#__codelineno-5-4"></a>
+<a id="__codelineno-5-5" name="__codelineno-5-5" href="#__codelineno-5-5"></a><span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;未缩放的标准差：</span><span class="si">{</span><span class="n">sample</span><span class="o">.</span><span class="n">std</span><span class="p">()</span><span class="o">.</span><span class="n">item</span><span class="p">()</span><span class="si">:</span><span class="s2">.4f</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>          <span class="c1"># ≈ 1.0</span>
+<a id="__codelineno-5-6" name="__codelineno-5-6" href="#__codelineno-5-6"></a><span class="n">sample_scaled</span> <span class="o">=</span> <span class="n">sample</span> <span class="o">*</span> <span class="n">math</span><span class="o">.</span><span class="n">sqrt</span><span class="p">(</span><span class="n">d_model</span><span class="p">)</span>
+<a id="__codelineno-5-7" name="__codelineno-5-7" href="#__codelineno-5-7"></a><span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;缩放后的标准差：</span><span class="si">{</span><span class="n">sample_scaled</span><span class="o">.</span><span class="n">std</span><span class="p">()</span><span class="o">.</span><span class="n">item</span><span class="p">()</span><span class="si">:</span><span class="s2">.4f</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>    <span class="c1"># ≈ 22.6</span>
+<a id="__codelineno-5-8" name="__codelineno-5-8" href="#__codelineno-5-8"></a><span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;缩放因子 sqrt(</span><span class="si">{</span><span class="n">d_model</span><span class="si">}</span><span class="s2">) = </span><span class="si">{</span><span class="n">math</span><span class="o">.</span><span class="n">sqrt</span><span class="p">(</span><span class="n">d_model</span><span class="p">)</span><span class="si">:</span><span class="s2">.2f</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+</code></pre></div>
+<p>我们会在第 5 节的代码中看到这个缩放操作。</p>
+<p>到此为止，每个 Token 已经有了丰富的语义向量——但模型还不知道它们的<strong>顺序</strong>。</p>
+<hr />
+<h2 id="4-positional-encoding">4. 位置编码（Positional Encoding）<a class="headerlink" href="#4-positional-encoding" title="Permanent link">&para;</a></h2>
+<details class="question">
+<summary>📖 数据不就是按顺序排列的吗？为什么还要加位置信息？</summary>
+<p>好问题！如果是串行读的模型（像 RNN、LSTM），模型确实可以根据读入顺序推断，但那样<strong>太慢了</strong>。Transformer 是<strong>一次性并行处理所有 token</strong> 的，所以没有位置编码的话，<code>I love you</code> 和 <code>Love I you</code> 对它来说一模一样。</p>
+</details>
+<p><strong>位置编码公式</strong></p>
+<div class="arithmatex">\[PE_{(pos, 2i)} = \sin(pos / 10000^{2i/d_{model}})\]</div>
+<div class="arithmatex">\[PE_{(pos, 2i+1)} = \cos(pos / 10000^{2i/d_{model}})\]</div>
+<blockquote>
+<p>推荐 B 站视频讲解（只有 10 分钟）：https://b23.tv/qpalhST</p>
+<p>一句话理解：基于 sin 和 cos 的周期性质，通过叠加不同尺度的正弦余弦来对位置编码，值范围控制在固定范围方便归一化，且任意 pos+K 的编码都能通过 pos 的编码线性推导获得。</p>
+</blockquote>
+<p><img alt="位置编码动图" src="../images/02/5.gif" /></p>
+<center>图源：https://huggingface.co/blog/zh/designing-positional-encoding</center>
+
+<p><strong>手动推导（简化版）</strong></p>
+<p>以 <code>max_len=4, d_model=8</code> 为例：</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-6-1" name="__codelineno-6-1" href="#__codelineno-6-1"></a>position × div_term:
+<a id="__codelineno-6-2" name="__codelineno-6-2" href="#__codelineno-6-2"></a>pos=0: [0.0,  0.0,  0.0,   0.0  ]
+<a id="__codelineno-6-3" name="__codelineno-6-3" href="#__codelineno-6-3"></a>pos=1: [1.0,  0.1,  0.01,  0.001]
+<a id="__codelineno-6-4" name="__codelineno-6-4" href="#__codelineno-6-4"></a>pos=2: [2.0,  0.2,  0.02,  0.002]
+<a id="__codelineno-6-5" name="__codelineno-6-5" href="#__codelineno-6-5"></a>pos=3: [3.0,  0.3,  0.03,  0.003]
+</code></pre></div>
+<p>偶数位用 sin，奇数位用 cos，交错拼接后：</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-7-1" name="__codelineno-7-1" href="#__codelineno-7-1"></a>列:     sin₀   cos₀   sin₁   cos₁   sin₂   cos₂   sin₃   cos₃
+<a id="__codelineno-7-2" name="__codelineno-7-2" href="#__codelineno-7-2"></a>pos=0: [ 0.0,   1.0,   0.0,   1.0,   0.0,   1.0,   0.0,   1.0 ]
+<a id="__codelineno-7-3" name="__codelineno-7-3" href="#__codelineno-7-3"></a>pos=1: [ 0.84,  0.54,  0.10,  0.99,  0.01,  1.0,   0.001, 1.0 ]
+<a id="__codelineno-7-4" name="__codelineno-7-4" href="#__codelineno-7-4"></a>pos=2: [ 0.91, -0.42,  0.20,  0.98,  0.02,  1.0,   0.002, 1.0 ]
+<a id="__codelineno-7-5" name="__codelineno-7-5" href="#__codelineno-7-5"></a>pos=3: [ 0.14, -0.99,  0.30,  0.96,  0.03,  1.0,   0.003, 1.0 ]
+</code></pre></div>
+<p>左边的列频率高，不同位置差异明显（秒针）；右边的列频率低，差异较小（时针）。通过不同频率的组合，可以为每个位置生成唯一的"位置指纹"。</p>
+<details class="question">
+<summary>📖 那位置会不会有重复？</summary>
+<p>单个维度是周期性的，但所有不同频率组合的最小公倍数趋于无穷大（周期是无理数），所以对于我们的小模型完全够用。新的大模型有更先进的位置编码方案（如 RoPE）。就像一个钟表的时针和分针，如果分针每 60 分钟转一圈，时针每 60√2 分钟转一圈，它们永远不会回到完全相同的组合位置。</p>
+</details>
+<p><strong>代码实现</strong></p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-8-1" name="__codelineno-8-1" href="#__codelineno-8-1"></a><span class="k">class</span><span class="w"> </span><span class="nc">PositionalEncoding</span><span class="p">(</span><span class="n">nn</span><span class="o">.</span><span class="n">Module</span><span class="p">):</span>
+<a id="__codelineno-8-2" name="__codelineno-8-2" href="#__codelineno-8-2"></a>    <span class="k">def</span><span class="w"> </span><span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">d_model</span><span class="p">,</span> <span class="n">max_len</span><span class="o">=</span><span class="mi">5000</span><span class="p">):</span>
+<a id="__codelineno-8-3" name="__codelineno-8-3" href="#__codelineno-8-3"></a>        <span class="nb">super</span><span class="p">(</span><span class="n">PositionalEncoding</span><span class="p">,</span> <span class="bp">self</span><span class="p">)</span><span class="o">.</span><span class="fm">__init__</span><span class="p">()</span>
+<a id="__codelineno-8-4" name="__codelineno-8-4" href="#__codelineno-8-4"></a>
+<a id="__codelineno-8-5" name="__codelineno-8-5" href="#__codelineno-8-5"></a>        <span class="n">pe</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">zeros</span><span class="p">(</span><span class="n">max_len</span><span class="p">,</span> <span class="n">d_model</span><span class="p">)</span>
+<a id="__codelineno-8-6" name="__codelineno-8-6" href="#__codelineno-8-6"></a>        <span class="n">position</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">arange</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="n">max_len</span><span class="p">,</span> <span class="n">dtype</span><span class="o">=</span><span class="n">torch</span><span class="o">.</span><span class="n">float</span><span class="p">)</span><span class="o">.</span><span class="n">unsqueeze</span><span class="p">(</span><span class="mi">1</span><span class="p">)</span>
+<a id="__codelineno-8-7" name="__codelineno-8-7" href="#__codelineno-8-7"></a>        <span class="c1"># 等价于 10000^(2i/d_model)，用 exp+log 变换是为了数值稳定性</span>
+<a id="__codelineno-8-8" name="__codelineno-8-8" href="#__codelineno-8-8"></a>        <span class="n">div_term</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">exp</span><span class="p">(</span><span class="n">torch</span><span class="o">.</span><span class="n">arange</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="n">d_model</span><span class="p">,</span> <span class="mi">2</span><span class="p">)</span><span class="o">.</span><span class="n">float</span><span class="p">()</span> <span class="o">*</span> <span class="p">(</span><span class="o">-</span><span class="n">math</span><span class="o">.</span><span class="n">log</span><span class="p">(</span><span class="mf">10000.0</span><span class="p">)</span> <span class="o">/</span> <span class="n">d_model</span><span class="p">))</span>
+<a id="__codelineno-8-9" name="__codelineno-8-9" href="#__codelineno-8-9"></a>
+<a id="__codelineno-8-10" name="__codelineno-8-10" href="#__codelineno-8-10"></a>        <span class="n">pe</span><span class="p">[:,</span> <span class="mi">0</span><span class="p">::</span><span class="mi">2</span><span class="p">]</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">sin</span><span class="p">(</span><span class="n">position</span> <span class="o">*</span> <span class="n">div_term</span><span class="p">)</span>  <span class="c1"># 偶数下标用 sin</span>
+<a id="__codelineno-8-11" name="__codelineno-8-11" href="#__codelineno-8-11"></a>        <span class="n">pe</span><span class="p">[:,</span> <span class="mi">1</span><span class="p">::</span><span class="mi">2</span><span class="p">]</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">cos</span><span class="p">(</span><span class="n">position</span> <span class="o">*</span> <span class="n">div_term</span><span class="p">)</span>  <span class="c1"># 奇数下标用 cos</span>
+<a id="__codelineno-8-12" name="__codelineno-8-12" href="#__codelineno-8-12"></a>        <span class="n">pe</span> <span class="o">=</span> <span class="n">pe</span><span class="o">.</span><span class="n">unsqueeze</span><span class="p">(</span><span class="mi">0</span><span class="p">)</span>  <span class="c1"># (1, max_len, d_model)</span>
+<a id="__codelineno-8-13" name="__codelineno-8-13" href="#__codelineno-8-13"></a>        <span class="c1"># register_buffer：告诉 PyTorch &quot;这个张量随模型保存/加载，但不参与梯度更新&quot;</span>
+<a id="__codelineno-8-14" name="__codelineno-8-14" href="#__codelineno-8-14"></a>        <span class="bp">self</span><span class="o">.</span><span class="n">register_buffer</span><span class="p">(</span><span class="s1">&#39;pe&#39;</span><span class="p">,</span> <span class="n">pe</span><span class="p">)</span>  <span class="c1"># 不需要学习的参数</span>
+<a id="__codelineno-8-15" name="__codelineno-8-15" href="#__codelineno-8-15"></a>
+<a id="__codelineno-8-16" name="__codelineno-8-16" href="#__codelineno-8-16"></a>    <span class="k">def</span><span class="w"> </span><span class="nf">forward</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">x</span><span class="p">):</span>
+<a id="__codelineno-8-17" name="__codelineno-8-17" href="#__codelineno-8-17"></a>        <span class="n">x</span> <span class="o">=</span> <span class="n">x</span> <span class="o">+</span> <span class="bp">self</span><span class="o">.</span><span class="n">pe</span><span class="p">[:,</span> <span class="p">:</span><span class="n">x</span><span class="o">.</span><span class="n">size</span><span class="p">(</span><span class="mi">1</span><span class="p">),</span> <span class="p">:]</span>
+<a id="__codelineno-8-18" name="__codelineno-8-18" href="#__codelineno-8-18"></a>        <span class="k">return</span> <span class="n">x</span>
+</code></pre></div>
+<p><strong>Forward 推导</strong></p>
+<p>假设 <code>x</code> 的 shape 是 <code>(32, 50, 512)</code> (batch=32, seq_len=50, d_model=512)：</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-9-1" name="__codelineno-9-1" href="#__codelineno-9-1"></a>self.pe 的 shape: (1, 5000, 512)
+<a id="__codelineno-9-2" name="__codelineno-9-2" href="#__codelineno-9-2"></a>截取: self.pe[:, :50, :] → (1, 50, 512)
+<a id="__codelineno-9-3" name="__codelineno-9-3" href="#__codelineno-9-3"></a>相加: x + self.pe[:, :50, :] → (32, 50, 512)  # batch 维度广播
+</code></pre></div>
+<p>位置编码和句子的具体内容无关——这是很自然的认知。"你爱我"、"我爱你"、"蜜雪冰城甜蜜"，第一个字都处于句首位置，理应都用 index=0 的位置编码。</p>
+<hr />
+<h2 id="5-embedding-positional-encoding">5. 组合 Embedding + Positional Encoding<a class="headerlink" href="#5-embedding-positional-encoding" title="Permanent link">&para;</a></h2>
+<p>将 Embedding 层和位置编码层封装为一个完整的输入层，就能将一段原始数据整合为语义信息+位置信息都包含的一组向量了：</p>
+<p><img alt="TransformerInputLayer 示意图" src="../images/02/6.png" /></p>
+<center>图源：https://luxiangdong.com/2023/04/19/transformer/</center>
+
+<div class="highlight"><pre><span></span><code><a id="__codelineno-10-1" name="__codelineno-10-1" href="#__codelineno-10-1"></a><span class="k">class</span><span class="w"> </span><span class="nc">TokenEmbedding</span><span class="p">(</span><span class="n">nn</span><span class="o">.</span><span class="n">Module</span><span class="p">):</span>
+<a id="__codelineno-10-2" name="__codelineno-10-2" href="#__codelineno-10-2"></a>    <span class="k">def</span><span class="w"> </span><span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">vocab_size</span><span class="p">,</span> <span class="n">emb_size</span><span class="p">):</span>
+<a id="__codelineno-10-3" name="__codelineno-10-3" href="#__codelineno-10-3"></a>        <span class="nb">super</span><span class="p">(</span><span class="n">TokenEmbedding</span><span class="p">,</span> <span class="bp">self</span><span class="p">)</span><span class="o">.</span><span class="fm">__init__</span><span class="p">()</span>
+<a id="__codelineno-10-4" name="__codelineno-10-4" href="#__codelineno-10-4"></a>        <span class="bp">self</span><span class="o">.</span><span class="n">embedding</span> <span class="o">=</span> <span class="n">nn</span><span class="o">.</span><span class="n">Embedding</span><span class="p">(</span><span class="n">vocab_size</span><span class="p">,</span> <span class="n">emb_size</span><span class="p">)</span>
+<a id="__codelineno-10-5" name="__codelineno-10-5" href="#__codelineno-10-5"></a>        <span class="bp">self</span><span class="o">.</span><span class="n">emb_size</span> <span class="o">=</span> <span class="n">emb_size</span>
+<a id="__codelineno-10-6" name="__codelineno-10-6" href="#__codelineno-10-6"></a>
+<a id="__codelineno-10-7" name="__codelineno-10-7" href="#__codelineno-10-7"></a>    <span class="k">def</span><span class="w"> </span><span class="nf">forward</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">tokens</span><span class="p">):</span>
+<a id="__codelineno-10-8" name="__codelineno-10-8" href="#__codelineno-10-8"></a>        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">embedding</span><span class="p">(</span><span class="n">tokens</span><span class="o">.</span><span class="n">long</span><span class="p">())</span> <span class="o">*</span> <span class="n">math</span><span class="o">.</span><span class="n">sqrt</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">emb_size</span><span class="p">)</span>
+<a id="__codelineno-10-9" name="__codelineno-10-9" href="#__codelineno-10-9"></a>
+<a id="__codelineno-10-10" name="__codelineno-10-10" href="#__codelineno-10-10"></a>
+<a id="__codelineno-10-11" name="__codelineno-10-11" href="#__codelineno-10-11"></a><span class="k">class</span><span class="w"> </span><span class="nc">TransformerInputLayer</span><span class="p">(</span><span class="n">nn</span><span class="o">.</span><span class="n">Module</span><span class="p">):</span>
+<a id="__codelineno-10-12" name="__codelineno-10-12" href="#__codelineno-10-12"></a>    <span class="k">def</span><span class="w"> </span><span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">vocab_size</span><span class="p">,</span> <span class="n">emb_size</span><span class="p">,</span> <span class="n">max_len</span><span class="o">=</span><span class="mi">5000</span><span class="p">,</span> <span class="n">dropout</span><span class="o">=</span><span class="mf">0.1</span><span class="p">):</span>
+<a id="__codelineno-10-13" name="__codelineno-10-13" href="#__codelineno-10-13"></a>        <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="fm">__init__</span><span class="p">()</span>
+<a id="__codelineno-10-14" name="__codelineno-10-14" href="#__codelineno-10-14"></a>        <span class="bp">self</span><span class="o">.</span><span class="n">token_emb</span> <span class="o">=</span> <span class="n">TokenEmbedding</span><span class="p">(</span><span class="n">vocab_size</span><span class="p">,</span> <span class="n">emb_size</span><span class="p">)</span>
+<a id="__codelineno-10-15" name="__codelineno-10-15" href="#__codelineno-10-15"></a>        <span class="bp">self</span><span class="o">.</span><span class="n">pos_emb</span> <span class="o">=</span> <span class="n">PositionalEncoding</span><span class="p">(</span><span class="n">emb_size</span><span class="p">,</span> <span class="n">max_len</span><span class="p">)</span>
+<a id="__codelineno-10-16" name="__codelineno-10-16" href="#__codelineno-10-16"></a>        <span class="bp">self</span><span class="o">.</span><span class="n">dropout</span> <span class="o">=</span> <span class="n">nn</span><span class="o">.</span><span class="n">Dropout</span><span class="p">(</span><span class="n">dropout</span><span class="p">)</span>
+<a id="__codelineno-10-17" name="__codelineno-10-17" href="#__codelineno-10-17"></a>
+<a id="__codelineno-10-18" name="__codelineno-10-18" href="#__codelineno-10-18"></a>    <span class="k">def</span><span class="w"> </span><span class="nf">forward</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">x</span><span class="p">):</span>
+<a id="__codelineno-10-19" name="__codelineno-10-19" href="#__codelineno-10-19"></a>        <span class="n">out</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">token_emb</span><span class="p">(</span><span class="n">x</span><span class="p">)</span>
+<a id="__codelineno-10-20" name="__codelineno-10-20" href="#__codelineno-10-20"></a>        <span class="n">out</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">pos_emb</span><span class="p">(</span><span class="n">out</span><span class="p">)</span>
+<a id="__codelineno-10-21" name="__codelineno-10-21" href="#__codelineno-10-21"></a>        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">dropout</span><span class="p">(</span><span class="n">out</span><span class="p">)</span>
+</code></pre></div>
+<p><strong>关于 Dropout</strong>：训练时随机将一部分维度置零，迫使模型不依赖任何单一特征——这是最简单有效的正则化手段。推理时自动关闭，不影响输出。</p>
+<p><strong>完整 Shape 追踪</strong>：</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-11-1" name="__codelineno-11-1" href="#__codelineno-11-1"></a>输入 token indices: (B, S)           ← 例如 (2, 5)，2 个句子，最长 5 个 token
+<a id="__codelineno-11-2" name="__codelineno-11-2" href="#__codelineno-11-2"></a>    ↓ TokenEmbedding 查表
+<a id="__codelineno-11-3" name="__codelineno-11-3" href="#__codelineno-11-3"></a>嵌入向量:           (B, S, D)         ← (2, 5, 512)
+<a id="__codelineno-11-4" name="__codelineno-11-4" href="#__codelineno-11-4"></a>    ↓ × √d_model 缩放
+<a id="__codelineno-11-5" name="__codelineno-11-5" href="#__codelineno-11-5"></a>缩放后:             (B, S, D)         ← 数值放大，shape 不变
+<a id="__codelineno-11-6" name="__codelineno-11-6" href="#__codelineno-11-6"></a>    ↓ + PositionalEncoding
+<a id="__codelineno-11-7" name="__codelineno-11-7" href="#__codelineno-11-7"></a>加位置编码:         (B, S, D)         ← 语义 + 位置，shape 不变
+<a id="__codelineno-11-8" name="__codelineno-11-8" href="#__codelineno-11-8"></a>    ↓ Dropout
+<a id="__codelineno-11-9" name="__codelineno-11-9" href="#__codelineno-11-9"></a>最终输出:           (B, S, D)         ← 这就是送入 Encoder/Decoder 的输入
+</code></pre></div>
+<details class="question">
+<summary>📖 假设 d_model=8, batch_size=2, 源语言序列为 [\"I love ML\", \"Hi\"]。从词汇表索引到最终 TransformerInputLayer 输出，请描述数据在每一步的 shape 变化？</summary>
+<p>假设词汇表：<code>&lt;pad&gt;:0, &lt;sos&gt;:1, &lt;eos&gt;:2, I:3, love:4, ML:5, Hi:6</code></p>
+<p><strong>Step 1：Token 化 + Padding</strong></p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-12-1" name="__codelineno-12-1" href="#__codelineno-12-1"></a>seq1: [3, 4, 5]  → 长度 3
+<a id="__codelineno-12-2" name="__codelineno-12-2" href="#__codelineno-12-2"></a>seq2: [6]        → 长度 1
+<a id="__codelineno-12-3" name="__codelineno-12-3" href="#__codelineno-12-3"></a>pad → [[3, 4, 5],
+<a id="__codelineno-12-4" name="__codelineno-12-4" href="#__codelineno-12-4"></a>       [6, 0, 0]]
+</code></pre></div>
+<p>Shape: <code>(2, 3)</code> — int64 索引张量</p>
+<p><strong>Step 2：Token Embedding</strong></p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-13-1" name="__codelineno-13-1" href="#__codelineno-13-1"></a><span class="n">emb</span> <span class="o">=</span> <span class="n">nn</span><span class="o">.</span><span class="n">Embedding</span><span class="p">(</span><span class="mi">7</span><span class="p">,</span> <span class="mi">8</span><span class="p">)</span>  <span class="c1"># vocab_size=7, d_model=8</span>
+<a id="__codelineno-13-2" name="__codelineno-13-2" href="#__codelineno-13-2"></a><span class="n">x</span> <span class="o">=</span> <span class="n">emb</span><span class="p">(</span><span class="n">input_ids</span><span class="p">)</span>        <span class="c1"># (2, 3) → (2, 3, 8)</span>
+</code></pre></div>
+<p>Shape: <code>(2, 3, 8)</code> — 每个 token 变成 8 维向量</p>
+<p><strong>Step 3：Scaling</strong></p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-14-1" name="__codelineno-14-1" href="#__codelineno-14-1"></a><span class="n">x</span> <span class="o">=</span> <span class="n">x</span> <span class="o">*</span> <span class="n">math</span><span class="o">.</span><span class="n">sqrt</span><span class="p">(</span><span class="mi">8</span><span class="p">)</span>      <span class="c1"># ≈ x * 2.828</span>
+</code></pre></div>
+<p>Shape 不变: <code>(2, 3, 8)</code>，但数值放大约 2.83 倍</p>
+<p><strong>Step 4：Positional Encoding</strong></p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-15-1" name="__codelineno-15-1" href="#__codelineno-15-1"></a><span class="n">x</span> <span class="o">=</span> <span class="n">x</span> <span class="o">+</span> <span class="n">pe</span><span class="p">[:,</span> <span class="p">:</span><span class="mi">3</span><span class="p">,</span> <span class="p">:]</span>      <span class="c1"># pe shape: (1, max_len, 8) → 广播为 (2, 3, 8)</span>
+</code></pre></div>
+<p>Shape 不变: <code>(2, 3, 8)</code>，每个位置加上对应的位置编码</p>
+<p><strong>Step 5：Dropout</strong></p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-16-1" name="__codelineno-16-1" href="#__codelineno-16-1"></a><span class="n">x</span> <span class="o">=</span> <span class="n">dropout</span><span class="p">(</span><span class="n">x</span><span class="p">)</span>             <span class="c1"># 训练时随机置零部分元素</span>
+</code></pre></div>
+<p>Shape 不变: <code>(2, 3, 8)</code>，这就是最终输出</p>
+</details>
+<hr />
+<h2 id="_3">小结<a class="headerlink" href="#_3" title="Permanent link">&para;</a></h2>
+<p>本篇我们完成了 Transformer 的"感官系统"：</p>
+<ul>
+<li><strong>词表构建</strong>：将文本转换为数字索引</li>
+<li><strong>Dataset &amp; DataLoader</strong>：处理变长序列的 Padding 策略</li>
+<li><strong>Token Embedding</strong>：将一维索引映射到高维向量空间</li>
+<li><strong>Positional Encoding</strong>：用正弦余弦函数为每个位置生成唯一编码</li>
+<li><strong>输入层组合</strong>：Embedding + 位置编码 + Dropout</li>
+</ul>
+<p>逐行写完上面的代码、运行无报错，就可以进入下一篇——<strong>手写多头注意力机制</strong>。那里才是 Transformer 真正的"灵魂"：你会发现，注意力机制本质上只做了一件事——让每个 token 去"找朋友"。</p>
+<hr />
+<h2 id="pe-rope">进阶：从正弦 PE 到 RoPE<a class="headerlink" href="#pe-rope" title="Permanent link">&para;</a></h2>
+<p>主流大模型（LLaMA、Qwen 等）已转向 RoPE（旋转位置编码），但正弦 PE 仍是理解位置编码概念的最佳起点。</p>
+<p>有兴趣的可以阅读 <a href="https://huggingface.co/blog/zh/designing-positional-encoding">HuggingFace 位置编码设计博客</a> 中的"旋转位置编码 (RoPE)"章节，以及 <a href="https://www.bilibili.com/video/BV1CQoaY2EU2/">B 站视频讲解</a>。</p>
+<p><strong>课后思考：正弦 PE 的三个局限性</strong></p>
+<ol>
+<li><strong>绝对位置 vs 相对位置</strong>：理论上正弦编码已将相对位置编码在向量中，模型可以自行"学会"其中的相对位置关系。但 RoPE 是显式注入相对位置的，无需依赖模型是否能学到。</li>
+<li><strong>加法注入 vs 旋转注入</strong>：PE 通过加法与 Embedding 结合，位置信息和语义信息共享同一向量空间，可能互相干扰。RoPE 通过旋转变换注入，理论上不改变向量的模长，位置耦合更优雅。</li>
+<li><strong>长度外推能力有限</strong>：虽然周期函数理论上可外推，但超出训练长度后性能仍会下降，现代方案（如 ALiBi、YaRN）都做了专门优化。</li>
+</ol>
+<hr />
+<p>上一篇：<a href="../01-pytorch-basics/">&lt;&lt; PyTorch 基础与神经网络模块</a></p>
+<p>下一篇：<a href="../03-multi-head-attention/">多头注意力机制与核心组件 &gt;&gt;</a></p>
+<hr />
+<h2 id="_4">参考文章<a class="headerlink" href="#_4" title="Permanent link">&para;</a></h2>
+<p><strong>Tokenizer</strong></p>
+<ul>
+<li><a href="https://bytetech.info/articles/7584656121341444150">ByteTech - Tokenizer 详解</a></li>
+</ul>
+<p><strong>位置编码</strong></p>
+<ul>
+<li><a href="https://huggingface.co/blog/zh/designing-positional-encoding">HuggingFace - 设计位置编码</a></li>
+<li><a href="https://bytetech.info/articles/7587029468749758527">ByteTech - 位置编码专题</a></li>
+</ul>
+<p><strong>Transformer 原理</strong></p>
+<ul>
+<li><a href="https://zhuanlan.zhihu.com/p/338817680">Transformer 模型详解（图解最完整版）</a></li>
+<li><a href="https://zhuanlan.zhihu.com/p/648127076">三万字最全解析！从零实现 Transformer</a></li>
+<li><a href="https://zhuanlan.zhihu.com/p/1984265632687087772">解剖注意力：从零构建 Transformer 的终极指南</a></li>
+<li><a href="https://luxiangdong.com/2023/04/19/transformer/">Transformer 教程 - luxiangdong</a></li>
+</ul>
+<p><strong>实操教程</strong></p>
+<ul>
+<li><a href="https://github.com/rasbt/LLMs-from-scratch">LLMs-from-scratch (GitHub)</a></li>
+<li><a href="https://github.com/datawhalechina/llms-from-scratch-cn">llms-from-scratch-cn (Datawhale 中文版)</a></li>
+</ul>
+
+
+
+
+
+
+
+
+
+
+
+
+                
+              </article>
+            </div>
+          
+          
+<script>var target=document.getElementById(location.hash.slice(1));target&&target.name&&(target.checked=target.name.startsWith("__tabbed_"))</script>
+        </div>
+        
+          <button type="button" class="md-top md-icon" data-md-component="top" hidden>
+  
+  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M13 20h-2V8l-5.5 5.5-1.42-1.42L12 4.16l7.92 7.92-1.42 1.42L13 8z"/></svg>
+  回到页面顶部
+</button>
+        
+      </main>
+      
+        <footer class="md-footer">
+  
+  <div class="md-footer-meta md-typeset">
+    <div class="md-footer-meta__inner md-grid">
+      <div class="md-copyright">
+  
+  
+    Made with
+    <a href="https://squidfunk.github.io/mkdocs-material/" target="_blank" rel="noopener">
+      Material for MkDocs
+    </a>
+  
+</div>
+      
+    </div>
+  </div>
+</footer>
+      
+    </div>
+    <div class="md-dialog" data-md-component="dialog">
+      <div class="md-dialog__inner md-typeset"></div>
+    </div>
+    
+    
+    
+      
+      
+      <script id="__config" type="application/json">{"annotate": null, "base": "..", "features": ["navigation.instant", "navigation.tracking", "navigation.sections", "navigation.top", "content.code.copy", "content.code.annotate"], "search": "../assets/javascripts/workers/search.2c215733.min.js", "tags": null, "translations": {"clipboard.copied": "\u5df2\u590d\u5236", "clipboard.copy": "\u590d\u5236", "search.result.more.one": "\u5728\u8be5\u9875\u4e0a\u8fd8\u6709 1 \u4e2a\u7b26\u5408\u6761\u4ef6\u7684\u7ed3\u679c", "search.result.more.other": "\u5728\u8be5\u9875\u4e0a\u8fd8\u6709 # \u4e2a\u7b26\u5408\u6761\u4ef6\u7684\u7ed3\u679c", "search.result.none": "\u6ca1\u6709\u627e\u5230\u7b26\u5408\u6761\u4ef6\u7684\u7ed3\u679c", "search.result.one": "\u627e\u5230 1 \u4e2a\u7b26\u5408\u6761\u4ef6\u7684\u7ed3\u679c", "search.result.other": "# \u4e2a\u7b26\u5408\u6761\u4ef6\u7684\u7ed3\u679c", "search.result.placeholder": "\u952e\u5165\u4ee5\u5f00\u59cb\u641c\u7d22", "search.result.term.missing": "\u7f3a\u5c11", "select.version": "\u9009\u62e9\u5f53\u524d\u7248\u672c"}, "version": null}</script>
+    
+    
+      <script src="../assets/javascripts/bundle.79ae519e.min.js"></script>
+      
+        <script src="../javascripts/mathjax.js"></script>
+      
+        <script src="https://unpkg.com/mathjax@3/es5/tex-mml-chtml.js"></script>
+      
+    
+  </body>
+</html>
