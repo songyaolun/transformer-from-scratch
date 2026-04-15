@@ -1,6 +1,25 @@
 # 从零实现 Transformer（一）：PyTorch 基础与神经网络模块
 
-> 本系列文章将带你从零开始，用 PyTorch 手写一个完整的 Transformer 模型。本篇是第一篇，覆盖 PyTorch 张量操作、`nn.Module` 机制、常用层、训练流程等基础知识。如果你已经熟悉 PyTorch，可以直接跳到第二篇。
+## 写在系列最前面
+
+写这系列文章的灵感来自《[夏洛特烦恼](https://movie.douban.com/subject/25964071/)》和《[万物发明指南](https://book.douban.com/subject/34464674/)》——不管你穿越回过去的哪个时间点，总要有点真本事才能引领世界。我怕如果穿回去，只知道 AI 会来，却不知道它是怎么来的。当今世界 AI 巨变的基座就是 Transformer + 老黄的GPU，你提前把论文发出来，直接抢跑 Transformer 的发明权。
+
+这个系列从今年 1 月就开始规划，过年期间到年后的几个周末写写停停，拖更了很久。我作为一个小白，有很多初级的困惑，想着可能会给其他初入门的同学一些参考。工作量确实不小——自己查资料、手写代码、顺整个流程，还有很多东西要重新学和查证。**本系列所有内容初版都是我一个字一个字敲出来的**，后经 AI 润色。你当然可以让 AI 直接生成一份教程，但可能没有这么多小白视角的旁白——把大家可能困惑的地方写出来，给出解释，应该算是独一份了。
+
+我看了很多书和视频后，总结了一个公式：
+
+$$文章信息质量 = \frac{创作者的（知识水平 \times 时间成本 \times 表达能力 \times 单位时间效率）}{知识理解门槛}$$
+
+本系列的短板在于我个人的知识水平和表达能力；优点是投入了较多的时间成本，并且努力在降低理解门槛。写这个系列给我自己带来了很大的收获，也希望能给大家带来一些收获。
+
+## 系列说明
+
+本系列对应的所有代码都可从 https://github.com/songyaolun/transformer-from-scratch 下载到本地 Mac 运行，或直接使用 Colab 运行。当然我更建议大家自己手写一遍加深印象，手推一些模型参数输出。
+
+笔者按内聚的学习内容将全系列分为 **5 个篇章**，推荐学习节奏是**五天工作日，每天一篇，每篇 30-60 分钟**，周末完成课后作业，刚好一周学完。学习步骤：
+
+1. **阅读文章**，回答文中穿插的小问题。有没有思路都可以点开答案看看，觉得答案写得不对欢迎交流。
+2. **运行代码**，能自己手写一遍最好。现在大家用 AI 写代码，经常脑子跟不上 AI 的输出，手写虽然慢，但会给你思考的时间。对于一些 cell 的输出，试着手算一下为什么是这样。
 
 ## 系列目录
 
@@ -12,11 +31,59 @@
 
 ---
 
-## 写在前面
-
-写这系列文章的初衷是夏洛铁烦恼和《万物发明指南》带来的灵感，希望能帮助到大家。不管你穿越回过去的哪个时间点，你总要有点真本事，才能在这个快节奏的世界里保持领先。我在想如果我穿回过去，我只知道 AI 会来，但是不知道 AI 是怎么来的，我想这就是我写这系列文章的初衷。当前 AI 巨变的基座就是 Transformer，你提前把论文发出来，就能让 Transformer 的作者感觉活在你的阴影之下。（哈哈哈，烂梗）
-
 ## 1. 环境准备
+
+因为很多小白会卡在开头，这部分就冗余了一些。了解这些概念的同学直接跳到 Part 2。
+
+### 1.1 Colab
+
+打开本系列关联的 Github 仓库：https://github.com/songyaolun/transformer-from-scratch，按以下步骤操作：
+
+**第一步**，点击仓库中的 notebook 链接，在 Colab 中打开：
+
+![Colab 打开步骤1](images/01/1.png)
+
+**第二步**，在跳转的新页面中选择右上角的小三角，选择**更改运行时类型**：
+
+![Colab 更改运行时](images/01/2.png)
+
+**第三步**，选择 **T4 GPU** 并保存：
+
+![选择 T4 GPU](images/01/3.png)
+
+**第四步**，点击**连接 T4**，稍等几秒：
+
+![连接 T4](images/01/4.png)
+
+右上角出现 RAM 和磁盘，说明 Colab 已经连上了——给你分配了一台云端机器，有内存、有 GPU、有磁盘：
+
+![RAM 和磁盘显示](images/01/5.png)
+
+**第五步**，将下图的内容取消注释并运行，即可安装后文所需的全部依赖：
+
+![安装依赖](images/01/6.png)
+
+点击按钮开始运行代码：
+
+![运行代码](images/01/7.png)
+
+### 1.2 PyCharm / VS Code
+
+需要先在本地配置环境，推荐使用 Conda，安装好依赖后，第一次运行 Cell 时会询问你环境配置，指定到具体的配置就好。以 VS Code 举例：
+
+点击 cell 左侧的 Run 按钮：
+
+![VS Code 运行 Cell](images/01/8.png)
+
+弹出环境配置选项：
+
+![选择环境](images/01/9.png)
+
+选择具体的环境（我用 Conda 专门建了一个）：
+
+![选择 Conda 环境](images/01/10.png)
+
+然后运行第一段代码：
 
 ```python
 import torch
@@ -33,11 +100,19 @@ else:
 print(f"设备: {device}")
 ```
 
-我的个人电脑是 M1 系列的 Mac 电脑，上面的执行结果是：`设备: mps`。如果你用有 NVIDIA GPU 的电脑，结果应该是 `设备: cuda`。
+我的个人电脑是 M1 系列的 Mac，执行结果是 `设备: mps`。如果你用有 NVIDIA GPU 的电脑，或者使用 Colab 并选择了 Google 的免费 GPU，结果应该是 `设备: cuda`。
 
-## 2. PyTorch 张量操作
+---
 
-### 2.1 创建张量
+环境跑通了？下面正式开始。Transformer 的一切计算都建立在张量（Tensor）之上——你可以把它理解为多维数组的升级版。
+
+---
+
+## 2. 张量——AI 的积木
+
+PyTorch 是当前深度学习的主流框架，类似于 Web 开发中的 React 或 Spring——帮你省掉重复劳动，专注核心逻辑。
+
+### 创建张量
 
 ```python
 import torch
@@ -61,7 +136,7 @@ x = torch.ones(3, 2)     # 全 1 张量
 x = torch.randn(3, 4)    # 标准正态分布张量
 ```
 
-### 2.2 张量属性
+### 张量属性
 
 ```python
 x = torch.randn(2, 4, 5)
@@ -71,7 +146,7 @@ print(x.numel())  # 40 (元素总数)
 print(x.dtype)    # torch.float32 (数据类型)
 ```
 
-### 2.3 张量索引
+### 张量索引
 
 ```python
 x = torch.tensor([[1, 2, 3], [4, 5, 6]])
@@ -80,7 +155,7 @@ print(x[0])         # tensor([1, 2, 3]) (第一行)
 print(x[:, 1:])     # tensor([[2, 3], [5, 6]]) (切片)
 ```
 
-### 2.4 形状操作
+### 形状操作
 
 #### view() — 变换形状
 
@@ -90,7 +165,7 @@ x_flat = x.view(2, -1)         # (2, 12)，-1 自动推断
 x_high = x_flat.view(2, 2, -1, 2)  # (2, 2, 3, 2)
 ```
 
-**什么时候用？** 拆分多头注意力的时候：
+什么时候用？拆分多头注意力的时候（不理解没关系，后面会讲）：
 
 ```python
 B, T, C = 2, 3, 8
@@ -114,7 +189,11 @@ x = torch.randn(2, 3, 4, 5)
 x_p = x.permute(0, 3, 1, 2)  # (2, 5, 3, 4)
 ```
 
-**transpose vs permute：** `transpose` 只交换两个维度，写法简洁；`permute` 可以重排所有维度。真实 Transformer 中的用法：
+??? question "📖 transpose 和 permute 感觉差不多，为啥设计两个类似的方法呢？"
+
+    `transpose` 源自矩阵转置，只交换两个维度，不感知其他维度；`permute` 可以一次重排所有维度。只需交换两个维度时，`transpose(0, 1)` 写法简洁，不必像 `permute(1, 0, 2, 3, 4, ...)` 那样罗列全部维度——维度越多差距越明显。反过来，需要重排多个维度时，`permute` 一行搞定，`transpose` 则要链式调用多次。
+
+真实 Transformer 中的用法：
 
 ```python
 B, T, C = 2, 3, 512
@@ -127,16 +206,20 @@ x = x.permute(0, 2, 1, 3)  # (2, 8, 3, 64)
 
 #### unsqueeze() / squeeze() — 增/减维度
 
+函数名本身就很直观——squeeze 有"挤压"的意思。`squeeze()` 去掉所有大小为 1 的维度，就像把空气从包装袋里挤出去；`unsqueeze()` 则是在指定位置插入一个大小为 1 的维度。
+
 ```python
 x = torch.tensor([1, 2, 3])   # shape: (3,)
-x1 = x.unsqueeze(0)           # shape: (1, 3)
-x2 = x.unsqueeze(1)           # shape: (3, 1)
+x1 = x.unsqueeze(0)           # shape: (1, 3)，在第0维增加
+x2 = x.unsqueeze(1)           # shape: (3, 1)，在第1维增加
 
 x = torch.randn(1, 3, 1, 4)  # shape: (1, 3, 1, 4)
 x = x.squeeze()                # shape: (3, 4)，删除所有大小为 1 的维度
 ```
 
-为什么有了 `view` 还要 `squeeze/unsqueeze`？因为 `unsqueeze(1)` 不需要关心其他维度的 size，而 `view` 必须声明所有维度的值。
+??? question "📖 为什么有了 view 还要 squeeze/unsqueeze？"
+
+    因为 `unsqueeze(1)` 不需要关心其他维度的 size，而 `view` 必须声明所有维度的值。
 
 #### torch.cat() — 拼接张量
 
@@ -158,13 +241,55 @@ x = x.contiguous()
 x = x.view(2, 4, 3)    # 正常
 ```
 
-`transpose`、`permute` 等操作改变的是内存布局，而 `view` 要求内存连续，所以需要 `contiguous()`。
+`transpose`、`permute` 等操作改变的是内存布局，而 `view` 要求内存连续，所以需要 `contiguous()`——就像书的页码乱了，`view` 要求页码连续才能重新装订。
+
+### 矩阵运算
+
+```python
+a = torch.tensor([[1, 2, 3], [4, 5, 6]])
+b = torch.tensor([[7, 8], [9, 10], [11, 12]])
+
+a @ b              # 等价于 torch.matmul(a, b)
+# tensor([[ 58,  64],
+#         [139, 154]])
+
+# 批量矩阵乘法
+A = torch.randn(10, 2, 3)
+B = torch.randn(10, 3, 4)
+C = torch.matmul(A, B)  # (10, 2, 4)
+```
+
+### 掩码操作
+
+```python
+x = torch.randn(2, 3)
+mask = torch.tensor([[True, False, True], [False, True, False]])
+result = x.masked_fill(mask, -1e9)  # mask 为 True 的位置填 -1e9
+```
+
+三角掩码（Transformer 中用于防止看到未来信息）：
+
+```python
+x = torch.ones(4, 4)
+torch.triu(x)  # 上三角
+torch.tril(x)  # 下三角
+```
+
+### 比较操作
+
+```python
+# eq() 等于 | ne() 不等于 | gt() 大于 | ge() 大于等于 | lt() 小于 | le() 小于等于
+
+x = torch.tensor([1, 0, 3, 0, 5])
+mask = x.ne(0)  # 不等于 0 的位置为 True
+print(f"不等于0的位置: {mask}")
+```
 
 ---
 
-## 3. 神经网络模块 (nn.Module)
+## 3. nn.Module——搭积木的方式
 
-`nn.Module` 是所有神经网络的基类，有点类似于 Java 的 Object 类。
+`nn.Module` 是所有神经网络的基类，类似于 Java 的 Object 类。
 
 ### 3.1 基本结构
 
@@ -190,21 +315,7 @@ class BrokenModel(nn.Module):
         self.linear = nn.Linear(10, 5)  # AttributeError!
 ```
 
-### 3.2 为什么用 model(x) 而不是 model.forward(x)？
-
-当你运行 `model(x)` 时，Python 实际调用的是 `model.__call__(x)`。在 `nn.Module` 的 `__call__` 方法中，会先运行各种 Hook，最后才调用你写的 `forward(x)`。
-
-```python
-# nn.Module 的简化实现（仅供理解）
-class Module:
-    def __call__(self, *args, **kwargs):
-        # 1. 执行前置操作（各种 Hook）
-        result = self.forward(*args, **kwargs)
-        # 2. 执行后置操作
-        return result
-```
-
-### 3.3 完整的调用链演示
+### 3.2 完整的调用链演示
 
 ```python
 class MyLayer(nn.Module):
@@ -245,9 +356,23 @@ model(x) → model.__call__(x) → model.forward(x) → self.layer1(x)
   → layer2.__call__(x) → layer2.forward(x)
 ```
 
-### 3.4 关于 `__setattr__` 的细节
+??? question "📖 为什么调用 model(x)，不直接调用 model.forward(x) 呢？"
 
-在 `nn.Module` 的 `__init__` 中，你会看到这样的代码：
+    当你运行 `model(x)` 时，Python 实际调用的是 `model.__call__(x)`。在 `nn.Module` 的 `__call__` 方法中，会先运行各种 Hook，最后才调用你写的 `forward(x)`。
+
+    ```python
+    # nn.Module 的简化实现（仅供理解）
+    class Module:
+        def __call__(self, *args, **kwargs):
+            # 1. 执行前置操作（各种 Hook）
+            result = self.forward(*args, **kwargs)
+            # 2. 执行后置操作
+            return result
+    ```
+
+### 3.3 可跳过：关于 `__setattr__` 的细节
+
+如果你看过 `nn.Module` 的 `__init__` 实现细节，你会看到这样的代码：
 
 ```python
 super().__setattr__("training", True)
@@ -255,13 +380,13 @@ super().__setattr__("_parameters", {})
 super().__setattr__("_buffers", {})
 ```
 
-为什么不直接用 `self.training = True`？因为 PyTorch 重写了 `__setattr__` 方法，添加了对 parameters、submodules、buffers 的特殊处理。`__init__` 中只是想单纯赋值，所以调用 `object` 的 `__setattr__` 来避免无效开销。
+??? question "📖 为什么不直接用 self.training = True？"
 
----
+    因为 PyTorch 重写了 `__setattr__` 方法，添加了对 parameters、submodules、buffers 的特殊处理。`__init__` 中只是想单纯赋值，所以调用父类 `object` 的 `__setattr__` 来避免无效开销。
 
-## 4. 常用层
+### 3.4 常用层
 
-### 4.1 nn.Linear — 全连接层
+#### nn.Linear — 全连接层
 
 ```python
 # y = wx + b
@@ -270,7 +395,7 @@ x = torch.randn(2, 10)
 output = linear(x)  # shape: (2, 5)
 ```
 
-### 4.2 nn.Embedding — 词嵌入层
+#### nn.Embedding — 词嵌入层
 
 将离散的词索引映射到连续的向量空间，本质就是**查表操作**：
 
@@ -284,7 +409,7 @@ batch_indices = torch.tensor([[1, 4, 6], [10, 5, 19]])
 output = embedding(batch_indices)  # shape: (2, 3, 64)
 ```
 
-### 4.3 nn.LayerNorm — 层归一化
+#### nn.LayerNorm — 层归一化
 
 对每个样本的特征进行归一化（均值为 0，方差为 1）：
 
@@ -295,7 +420,7 @@ x = torch.randn(2, 10, dim)
 output = layer_norm(x)
 ```
 
-### 4.4 nn.Dropout — 随机丢弃
+#### nn.Dropout — 随机丢弃
 
 训练时随机将部分参数设为 0，避免过拟合：
 
@@ -304,9 +429,13 @@ drop_out = nn.Dropout(0.5)  # 50% 概率置零
 output = drop_out(x)
 ```
 
-注意：非零值会被放大 `1/(1-p)` 倍，保证特征期望不变。
+??? question "📖 仔细观察下，为什么 Dropout 的非零值变化了呢，刚才不是说只会有一些值被置为 0 吗？"
 
-### 4.5 激活函数
+    观察总结下其他值的规律，有没有什么发现，是不是他们变成了原来的 2 倍？
+
+    被丢掉的值凭空消失了对吧，那把对应的非零值放大一倍，就能保证这些特征期望不变。缩放的倍数是 `1/(1-p)`，其中 p 是 dropout 的概率。总结：非零值会被放大 `1/(1-p)` 倍，保证特征期望不变。
+
+#### 激活函数
 
 ```python
 import torch.nn.functional as F
@@ -322,44 +451,63 @@ F.softmax(x, dim=-1)  # tensor([0.0900, 0.2447, 0.6652])
 
 ---
 
-## 5. 训练相关
+## 4. 训练流程——让模型学起来
 
-### 5.1 设备管理
+### 4.1 设备管理
 
 ```python
-if torch.cuda.is_available():
-    device = torch.device("cuda")
-elif torch.backends.mps.is_available():
-    device = torch.device("mps")
-else:
-    device = torch.device("cpu")
+x_cpu = torch.ones((3, 3))
+print(f"x_cpu: device={x_cpu.device}, id={id(x_cpu)}")
 
-x = x.to(device)    # 张量需要重新赋值
-model.to(device)     # 模型是原地操作
+x_gpu = x_cpu.to(device)
+print(f"x_gpu: device={x_gpu.device}, id={id(x_gpu)}")
+print("注意 id 不同，说明 tensor.to() 不是原地操作")
+
+net = nn.Sequential(nn.Linear(3, 3))
+print(f"\nmodel id: {id(net)}")
+net.to(device)
+print(f"model id: {id(net)}")
+print("id 相同，model.to() 是原地操作")
 ```
 
-为什么张量需要 `x = x.to(device)` 而模型只需要 `model.to(device)`？
+??? question "📖 为什么张量需要 x = x.to(device) 而模型只需要 model.to(device)？"
 
-- **tensor** 从内存转移到显存，地址不一样了，不是 inplace 操作
-- **model** 内部的参数 tensor 换了，但 model 这个"容器"还是同一个对象引用
+    - **tensor** 从内存转移到显存，地址不一样了，不是 inplace 操作
+    - **model** 内部的参数 tensor 换了，但 model 这个"容器"还是同一个对象引用
 
-### 5.2 损失函数
+    想好好研究的可以参考：https://pytorch.zhangxiann.com/7-mo-xing-qi-ta-cao-zuo/7.3-shi-yong-gpu-xun-lian-mo-xing
+
+### 4.2 损失函数
 
 ```python
 # 分类任务用 CrossEntropyLoss
+# 假设有 2 个样本，总共 3 个类别 (0:猫, 1:狗, 2:鸟)
+# 第1个样本打分：模型认为大概率是猫 (1.5最高)
+# 第2个样本打分：模型认为大概率是狗 (2.0最高)
+# 真实标签：第1个是猫 (索引0)，第2个是鸟 (索引2)
+# 猫预测准了，鸟没那么准
 criterion = nn.CrossEntropyLoss()
 output = torch.tensor([[1.5, 0.2, -0.5], [0.1, 2.0, 0.3]])
 target = torch.tensor([0, 2])
 loss = criterion(output, target)
+```
 
+!!! warning "常见坑"
+    `CrossEntropyLoss` 内部已经帮你做了 Softmax，不要在模型输出层再加一次——加了反而会让训练不收敛。
+
+```python
 # 回归任务用 MSELoss
+# 预测：第一套房 200万，第二套 400万
+# 真实：第一套 220万，第二套 380万
 criterion = nn.MSELoss()
 output = torch.tensor([[200.0], [400.0]])
 target = torch.tensor([[220.0], [380.0]])
 loss = criterion(output, target)  # 400.0
 ```
 
-### 5.3 优化器与训练循环
+### 4.3 优化器与训练循环
+
+训练循环五步，就像健身：超量恢复（清空疲劳）→ 做动作 → 感受哪里酸 → 大脑记住 → 下次做得更好。
 
 ```python
 import torch.optim as optim
@@ -369,14 +517,14 @@ criterion = nn.CrossEntropyLoss()
 optimizer = optim.Adam(model.parameters(), lr=0.001)
 
 for epoch in range(10):
-    optimizer.zero_grad()       # 1. 清空梯度
-    outputs = model(inputs)     # 2. 前向传播
-    loss = criterion(outputs, targets)  # 3. 计算损失
-    loss.backward()             # 4. 反向传播
-    optimizer.step()            # 5. 更新参数
+    optimizer.zero_grad()       # 1. 清空梯度（清空疲劳）
+    outputs = model(inputs)     # 2. 前向传播（做动作）
+    loss = criterion(outputs, targets)  # 3. 计算损失（感受哪里酸）
+    loss.backward()             # 4. 反向传播（大脑记住）
+    optimizer.step()            # 5. 更新参数（下次做更好）
 ```
 
-### 5.4 训练与评估模式
+### 4.4 训练与评估模式
 
 ```python
 model.train()  # 启用 Dropout, BatchNorm 等
@@ -391,7 +539,7 @@ model.eval()   # 禁用 Dropout, BatchNorm 等
 
 两者通常成对出现。新版 PyTorch 中可用 `torch.inference_mode()` 替代 `torch.no_grad()`，性能更好。
 
-### 5.5 梯度相关操作
+### 4.5 梯度相关操作
 
 ```python
 # 反向传播计算梯度
@@ -404,49 +552,15 @@ print(x.grad)  # tensor([4.])，对 y=x² 求导，x=2 时梯度为 4
 z = y.detach()  # 不参与梯度计算
 
 # 冻结预训练模型参数（迁移学习）
+# detach 可以禁用某些层的梯度计算，但如果你是想复用模型参数做迁移学习，
+# 最好使用 requires_grad_() 方法
 for param in resnet.parameters():
     param.requires_grad_(False)
 ```
 
 ---
 
-## 6. 矩阵运算
-
-### 6.1 矩阵乘法
-
-```python
-a = torch.tensor([[1, 2, 3], [4, 5, 6]])
-b = torch.tensor([[7, 8], [9, 10], [11, 12]])
-
-a @ b              # 等价于 torch.matmul(a, b)
-# tensor([[ 58,  64],
-#         [139, 154]])
-
-# 批量矩阵乘法
-A = torch.randn(10, 2, 3)
-B = torch.randn(10, 3, 4)
-C = torch.matmul(A, B)  # (10, 2, 4)
-```
-
-### 6.2 掩码操作
-
-```python
-x = torch.randn(2, 3)
-mask = torch.tensor([[True, False, True], [False, True, False]])
-result = x.masked_fill(mask, -1e9)  # mask 为 True 的位置填 -1e9
-```
-
-三角掩码（Transformer 中用于防止看到未来信息）：
-
-```python
-x = torch.ones(4, 4)
-torch.triu(x)  # 上三角
-torch.tril(x)  # 下三角
-```
-
----
-
-## 7. 一个完整的神经网络
+## 5. 一个完整的神经网络
 
 把上面的知识串起来：
 
@@ -486,32 +600,34 @@ print(f"损失值: {loss.item()}")
 
 ---
 
-## 8. torch.compile 简介
-
-PyTorch 2.0 引入了 `torch.compile`，可以将模型编译为更高效的代码：
-
-```python
-@torch.compile
-def foo(x):
-    return torch.sin(x) + 1
-
-foo(torch.randn(10).cpu())
-```
-
-在 CPU 上会生成优化的 C++ 代码，在 GPU 上会生成 Triton 代码。
-
----
-
 ## 小结
 
-本篇介绍了 PyTorch 的核心基础：
-- **张量**：创建、索引、形状变换、拼接
-- **nn.Module**：继承、forward、调用链
-- **常用层**：Linear、Embedding、LayerNorm、Dropout
-- **训练流程**：损失函数、优化器、梯度、设备管理
+本篇介绍了 PyTorch 的核心基础，也是手写 Transformer 的全部"原材料"：
 
-掌握这些，你就有了手写 Transformer 的全部"原材料"。下一篇我们将构建翻译数据集和 Transformer 的输入层。
+| 模块 | 关键 API | 用途速查 |
+|------|---------|---------|
+| 张量创建 | `torch.tensor`, `zeros`, `ones`, `randn` | 构造数据 |
+| 形状操作 | `view`, `transpose`, `permute`, `squeeze`, `unsqueeze`, `cat` | 变换维度 |
+| 内存 | `contiguous` | 解决 view 报错 |
+| 矩阵运算 | `@`, `matmul`, `masked_fill`, `triu`, `tril` | 注意力计算核心 |
+| 比较 | `eq`, `ne`, `gt`, `ge`, `lt`, `le` | 掩码生成 |
+| 模型基类 | `nn.Module`, `forward`, `super().__init__()` | 搭模型 |
+| 常用层 | `Linear`, `Embedding`, `LayerNorm`, `Dropout` | 模型组件 |
+| 激活函数 | `F.relu`, `F.softmax` | 非线性变换 |
+| 训练 | `CrossEntropyLoss`, `MSELoss`, `Adam`, `zero_grad`, `backward`, `step` | 训练循环 |
+| 设备 | `to(device)`, `train()`, `eval()`, `no_grad()` | 设备与模式管理 |
+| 梯度 | `requires_grad`, `detach`, `requires_grad_(False)` | 梯度控制 |
+
+其实本篇是系列中最长的一篇，能看到这里就完成一半了。万事开头难，后面的文章都更简短。本篇的所有内容就像参考书一样，后续看到不太懂的代码，回这里查关键词就好。
+
+下一篇我们将构建翻译数据集和 Transformer 的输入层。
 
 ---
 
 下一篇：[数据处理与 Transformer 输入层 >>](02-data-and-input-layer.md)
+
+## 参考文章
+
+- [PyTorch 教程](https://fancyerii.github.io/books/pytorch/)
+- [模型相关](https://zhuanlan.zhihu.com/p/340453841)
+- [GPU 训练详解](https://pytorch.zhangxiann.com/7-mo-xing-qi-ta-cao-zuo/7.3-shi-yong-gpu-xun-lian-mo-xing)
