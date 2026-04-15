@@ -173,6 +173,8 @@ print("Subsequent Mask:\n", subsequent_mask.squeeze())
 
 ![Transformer Encoder-Decoder 架构图](images/04/0.png)
 
+<center>图源：https://jalammar.github.io/illustrated-transformer/</center>
+
 **上图展示了 Transformer 的经典 Encoder-Decoder 架构。** 左侧的编码器（Encoder）负责理解和编码输入信息，右侧的解码器（Decoder）负责生成目标输出。两者都由多个相同的层堆叠而成，通过残差连接（Add）和层归一化（Normalize）保持训练稳定。从编码器顶部指向解码器的长箭头，就是连接两端的"桥梁"——将编码后的上下文信息传递给解码器。
 
 先聚焦左侧。Encoder 的实现很直接——堆叠多个 EncoderLayer，最后加一层 LayerNorm：
@@ -319,6 +321,8 @@ print("Output Shape:", output.shape)  # (2, 6, 100) → (batch, tgt_len, vocab_s
 ## 6. 延伸：从 Encoder-Decoder 到 Decoder-Only
 
 ![Transformer 用于文本分类的变体](images/04/1.png)
+
+<center>图源：https://peterbloem.nl/blog/transformers</center>
 
 **上图展示了 Transformer 用于文本分类的变体。** 输入句子经过多个 Encoder Block 编码后，通过平均池化压缩成一个句子向量，再送入分类层输出预测。这提醒我们：Transformer 的架构并不是固定的，可以根据任务灵活裁剪。
 

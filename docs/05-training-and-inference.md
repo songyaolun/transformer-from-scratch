@@ -309,6 +309,8 @@ for s in test_sentences:
 
 ![KV Cache 示意图](images/05/0.png)
 
+<center>图源：https://www.dailydoseofds.com</center>
+
 ??? question "📖 如何用 KV Cache 优化 Greedy Decode？时间复杂度有什么提升？"
 
     **原始版本**：步骤 t 处理长度 t+1 的序列，Self-Attention 复杂度 O((t+1)²×d)，总复杂度 O(T³×d/3)。
